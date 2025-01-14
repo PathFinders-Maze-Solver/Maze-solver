@@ -1,7 +1,6 @@
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-import random
 from queue import Queue
 from PIL import Image
 
@@ -64,21 +63,22 @@ def find_path(maze, start, end):
 def draw_maze(maze, path=None):
     fig, ax = plt.subplots(figsize=(10, 10))
     
-    # Set the border color to white
-    fig.patch.set_edgecolor('white')
+    # Set the border color to black
+    fig.patch.set_edgecolor('black')
     fig.patch.set_linewidth(0)
 
-    ax.imshow(maze, cmap=plt.cm.binary, interpolation='nearest')
+    # Display the maze: walls as black (1) and paths as white (0)
+    ax.imshow(maze, cmap='gray', interpolation='nearest')  # Use gray colormap
     ax.set_xticks([])
     ax.set_yticks([])
     
     # Draw the path if it exists
     if path is not None:
         for (y, x) in path:
-            ax.plot(x, y, marker='o', color='red', markersize=5)  # Draw each point of the path
+            ax.plot(x, y, marker='o', color='white', markersize=5)  # Draw each point of the path
 
         # Prepare for path animation
-        line, = ax.plot([], [], color='red', linewidth=2)
+        line, = ax.plot([], [], color='white', linewidth=2)
         
         def init():
             line.set_data([], [])
