@@ -3,6 +3,7 @@ from tkinter import messagebox
 from queue import Queue
 import heapq
 import random
+from matplotlib import animation
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,60 +12,71 @@ from algorithms.dijkstra import find_path_Dijkstras
 from algorithms.a_star import find_path_A_star
 
 
-def create_maze(dim, loop_chance=0.2):
+def create_maze(dim):
+    # Create a grid filled with walls
     maze = np.ones((dim*2+1, dim*2+1))
+
+    # Define the starting point
     x, y = (0, 0)
     maze[2*x+1, 2*y+1] = 0
-    stack = [(x, y)]
-    visited = set()
-    visited.add((x, y))
 
-    while stack:
+    # Initialize the stack with the starting point
+    stack = [(x, y)]
+    while len(stack) > 0:
         x, y = stack[-1]
+
+        # Define possible directions
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         random.shuffle(directions)
-        moved = False
 
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            if (nx, ny) not in visited and 0 <= nx < dim and 0 <= ny < dim:
+            if nx >= 0 and ny >= 0 and nx < dim and ny < dim and maze[2*nx+1, 2*ny+1] == 1:
                 maze[2*nx+1, 2*ny+1] = 0
                 maze[2*x+1+dx, 2*y+1+dy] = 0
                 stack.append((nx, ny))
-                visited.add((nx, ny))
-                moved = True
                 break
-
-        if not moved and random.random() < loop_chance:
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < dim and 0 <= ny < dim:
-                    maze[2*x+1+dx, 2*y+1+dy] = 0
+        else:
             stack.pop()
-        elif not moved:
-            stack.pop()
-
+            
+    # Create an entrance and an exit
     maze[1, 0] = 0
     maze[-2, -1] = 0
+
     return maze
 
 
-# Function to draw maze and path
 def draw_maze(maze, path=None):
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(10,10))
+    
+    # Set the border color to white
+    fig.patch.set_edgecolor('white')
+    fig.patch.set_linewidth(0)
+
     ax.imshow(maze, cmap=plt.cm.binary, interpolation='nearest')
-    ax.set_xticks([]) 
-    ax.set_yticks([])   
-
-    # Draw the red line for the path
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    # Prepare for path animation
     if path is not None:
-        path = [(p[1], p[0]) for p in path]
-        ax.plot(*zip(*path), color='red', linewidth=2)
-
+        line, = ax.plot([], [], color='red', linewidth=2)
+        
+        def init():
+            line.set_data([], [])
+            return line,
+        
+        # update is called for each path point in the maze
+        def update(frame):
+            x, y = path[frame]
+            line.set_data(*zip(*[(p[1], p[0]) for p in path[:frame+1]]))  # update the data
+            return line,
+        
+        ani = animation.FuncAnimation(fig, update, frames=range(len(path)), init_func=init, blit=True, repeat = False, interval=20)
+    
+    # Draw entry and exit arrows
     ax.arrow(0, 1, .4, 0, fc='green', ec='green', head_width=0.3, head_length=0.3)
-    ax.arrow(maze.shape[1] - 1, maze.shape[0] - 2, 0.4, 0, fc='blue', ec='blue', head_width=0.3, head_length=0.3)
-
-    return fig
+    ax.arrow(maze.shape[1] - 1, maze.shape[0]  - 2, 0.4, 0, fc='blue', ec='blue', head_width=0.3, head_length=0.3)
+    plt.show()
 
 # Global variables to store maze and path
 current_maze = None
