@@ -11,6 +11,8 @@ pygame.init()
 # Global variables for maze state
 cols, rows, grid, stack, current, start, goal = 0, 0, [], [], None, None, None
 w = 0
+x_offset = 0
+y_offset = 0
 
 
 def generate_maze():
@@ -210,19 +212,28 @@ def solve_maze():
             return None
         return i + j * cols
 
+    surface = pygame.Surface((600, 600))
+    surface.fill((0, 0, 0))
+
     while queue:
         current, path = queue.popleft()
 
         if current == goal:
-            # If goal is reached, highlight the path
-            for cell in path:
-                cell.highlight(surface)
+            # If goal is reached, draw the path with red lines
+            for i in range(len(path) - 1):
+                x1 = path[i].i * w + x_offset + w // 2
+                y1 = path[i].j * w + y_offset + w // 2
+                x2 = path[i + 1].i * w + x_offset + w // 2
+                y2 = path[i + 1].j * w + y_offset + w // 2
+                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
+
             # Update the canvas with the path
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (600, 600), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk  # Keep reference to avoid garbage collection
+
             messagebox.showinfo("Maze Solved", "Maze solved using BFS!")
             return
 
@@ -239,8 +250,7 @@ def solve_maze():
                     queue.append((neighbor, new_path))
 
         # Update the canvas at each step
-        surface = pygame.Surface((600, 600))
-        surface.fill((0, 0, 0))
+        surface.fill((0, 0, 0))  # Clear the surface for the next step
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
