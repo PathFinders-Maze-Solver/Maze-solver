@@ -200,7 +200,7 @@ def generate_maze():
     step()
 
 
-def solve_maze():
+def solve_maze_bfs():
     global start, goal
     visited = set()
     queue = deque([(start, [])])  # Queue holds tuples of (current_cell, path_to_here)
@@ -215,7 +215,11 @@ def solve_maze():
     surface = pygame.Surface((600, 600))
     surface.fill((0, 0, 0))
 
-    while queue:
+    def step():
+        if not queue:
+            messagebox.showinfo("Maze Solved", "No path found!")
+            return
+
         current, path = queue.popleft()
 
         if current == goal:
@@ -259,9 +263,81 @@ def solve_maze():
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
-        root.update_idletasks()  # Force Tkinter to update the display
 
-    messagebox.showinfo("Maze Solved", "No path found!")
+        root.after(50, step)  # Continue to the next step
+
+    step()
+
+def solve_maze_dfs():
+    global start, goal
+    visited = set()
+    stack = [(start, [])]  # Stack holds tuples of (current_cell, path_to_here)
+    visited.add(start)
+
+    def index(i, j):
+        """Return the index of the cell based on row, column."""
+        if i < 0 or j < 0 or i >= cols or j >= rows:
+            return None
+        return i + j * cols
+
+    surface = pygame.Surface((600, 600))
+    surface.fill((0, 0, 0))
+
+    def step():
+        if not stack:
+            messagebox.showinfo("Maze Solved", "No path found!")
+            return
+
+        current, path = stack.pop()  # Pop from the stack (DFS behavior)
+
+        if current == goal:
+            # If goal is reached, draw the path with red lines
+            for i in range(len(path) - 1):
+                x1 = path[i].i * w + x_offset + w // 2
+                y1 = path[i].j * w + y_offset + w // 2
+                x2 = path[i + 1].i * w + x_offset + w // 2
+                y2 = path[i + 1].j * w + y_offset + w // 2
+                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
+
+            # Update the canvas with the path
+            img_data = pygame.image.tostring(surface, "RGB")
+            img = Image.frombytes("RGB", (600, 600), img_data)
+            img_tk = ImageTk.PhotoImage(img)
+            canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+            canvas.img = img_tk  # Keep reference to avoid garbage collection
+
+            messagebox.showinfo("Maze Solved", "Maze solved using DFS!")
+            return
+
+        # Explore neighbors (same order as BFS)
+        for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
+            ni, nj = current.i + di, current.j + dj
+            neighbor_idx = index(ni, nj)
+
+            if neighbor_idx is not None:
+                neighbor = grid[neighbor_idx]
+                if neighbor not in visited and not current.walls[direction]:
+                    visited.add(neighbor)
+                    new_path = path + [current]
+                    stack.append((neighbor, new_path))  # Push to stack
+
+        # Update the canvas at each step
+        surface.fill((0, 0, 0))  # Clear the surface for the next step
+        for cell in grid:
+            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
+
+        img_data = pygame.image.tostring(surface, "RGB")
+        img = Image.frombytes("RGB", (600, 600), img_data)
+        img_tk = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+        canvas.img = img_tk  # Keep reference to avoid garbage collection
+
+        root.after(50, step)  # Continue to the next step
+
+    step()
+
+
+
 
 
 
@@ -280,7 +356,23 @@ size_entry.pack()
 generate_button = tk.Button(root, text="Generate Maze", command=generate_maze)
 generate_button.pack()
 
-solve_button = tk.Button(root, text="Solve Maze", command=solve_maze)
+# Radio buttons to select algorithm
+algorithm_var = tk.StringVar(value="BFS")  # Default selection is BFS
+
+bfs_radio = tk.Radiobutton(root, text="BFS", variable=algorithm_var, value="BFS")
+bfs_radio.pack()
+
+dfs_radio = tk.Radiobutton(root, text="DFS", variable=algorithm_var, value="DFS")
+dfs_radio.pack()
+
+def solve_maze_selected():
+    """Calls the selected maze-solving algorithm."""
+    if algorithm_var.get() == "BFS":
+        solve_maze_bfs()  # Calls BFS
+    else:
+        solve_maze_dfs()  # Calls DFS
+
+solve_button = tk.Button(root, text="Solve Maze", command=solve_maze_selected)
 solve_button.pack()
 
 root.mainloop()
