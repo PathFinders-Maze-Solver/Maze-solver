@@ -1,3 +1,4 @@
+import time
 import pygame
 import sys
 import random
@@ -31,6 +32,8 @@ def generate_maze():
     w = 600 // cols  # cell size
     grid.clear()
     stack.clear()
+
+    start_time = time.time()  # Start measuring time
 
     # Calculate the offset to center the maze
     maze_width = cols * w
@@ -147,6 +150,12 @@ def generate_maze():
         elif stack:
             current = stack.pop()
 
+        # Calculate and update execution time
+        end_time = time.time()
+        execution_time = round(end_time - start_time, 2)
+        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
+        # Update the canvas with the maze
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (600, 600), img_data)
         img_tk = ImageTk.PhotoImage(img)
@@ -200,11 +209,14 @@ def generate_maze():
     step()
 
 
+
 def solve_maze_bfs():
     global start, goal
     visited = set()
     queue = deque([(start, [])])  # Queue holds tuples of (current_cell, path_to_here)
     visited.add(start)
+
+    start_time = time.time()
 
     def index(i, j):
         """Return the index of the cell based on row, column."""
@@ -253,6 +265,12 @@ def solve_maze_bfs():
                     new_path = path + [current]
                     queue.append((neighbor, new_path))
 
+        
+        end_time = time.time()
+        execution_time = round(end_time - start_time, 2)
+        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+        
+
         # Update the canvas at each step
         surface.fill((0, 0, 0))  # Clear the surface for the next step
         for cell in grid:
@@ -273,6 +291,8 @@ def solve_maze_dfs():
     visited = set()
     stack = [(start, [])]  # Stack holds tuples of (current_cell, path_to_here)
     visited.add(start)
+
+    start_time = time.time()
 
     def index(i, j):
         """Return the index of the cell based on row, column."""
@@ -321,6 +341,10 @@ def solve_maze_dfs():
                     new_path = path + [current]
                     stack.append((neighbor, new_path))  # Push to stack
 
+        end_time = time.time()
+        execution_time = round(end_time - start_time, 2)
+        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
         # Update the canvas at each step
         surface.fill((0, 0, 0))  # Clear the surface for the next step
         for cell in grid:
@@ -338,14 +362,14 @@ def solve_maze_dfs():
 
 
 
-
-
-
 root = tk.Tk()
 root.title("Maze Solver")
 
 canvas = tk.Canvas(root, width=600, height=600)
 canvas.pack()
+
+execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
+execution_time_label.pack(pady=10)
 
 # Input size entry
 size_label = tk.Label(root, text="Maze Size (e.g., 10):")
