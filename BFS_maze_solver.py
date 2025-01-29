@@ -33,7 +33,8 @@ def generate_maze():
     grid.clear()
     stack.clear()
 
-    start_time = time.time()  # Start measuring time
+    start_time = time.time()
+    
 
     # Calculate the offset to center the maze
     maze_width = cols * w
@@ -150,12 +151,6 @@ def generate_maze():
         elif stack:
             current = stack.pop()
 
-        # Calculate and update execution time
-        end_time = time.time()
-        execution_time = round(end_time - start_time, 2)
-        execution_time_label.config(text=f"Execution Time: {execution_time}s")
-
-        # Update the canvas with the maze
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (600, 600), img_data)
         img_tk = ImageTk.PhotoImage(img)
@@ -166,7 +161,11 @@ def generate_maze():
             root.after(50, step)  # Continue maze generation
         else:
             set_start_and_goal()
-            messagebox.showinfo("Maze Generation", "Maze generation complete!")
+            end_time = time.time()  # End the timer
+            execution_time = end_time - start_time  # Calculate execution time
+            execution_time_label.config(text=f"Execution Time: {execution_time}s")  # Update the label
+            messagebox.showinfo("Maze Generation", f"Maze generation complete! Time taken: {execution_time:.2f}s")
+            
 
     def set_start_and_goal():
         """Set the start and goal points after maze generation."""
@@ -209,7 +208,6 @@ def generate_maze():
     step()
 
 
-
 def solve_maze_bfs():
     global start, goal
     visited = set()
@@ -235,7 +233,7 @@ def solve_maze_bfs():
         current, path = queue.popleft()
 
         if current == goal:
-            # If goal is reached, draw the path with red lines
+            # If goal is reached, draw the entire path in red
             for i in range(len(path) - 1):
                 x1 = path[i].i * w + x_offset + w // 2
                 y1 = path[i].j * w + y_offset + w // 2
@@ -243,7 +241,7 @@ def solve_maze_bfs():
                 y2 = path[i + 1].j * w + y_offset + w // 2
                 pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
 
-            # Update the canvas with the path
+            # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (600, 600), img_data)
             img_tk = ImageTk.PhotoImage(img)
@@ -265,17 +263,25 @@ def solve_maze_bfs():
                     new_path = path + [current]
                     queue.append((neighbor, new_path))
 
-        
+        # Calculate and update execution time
         end_time = time.time()
         execution_time = round(end_time - start_time, 2)
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
-        
 
-        # Update the canvas at each step
+        # Clear the surface for the next step and draw current state
         surface.fill((0, 0, 0))  # Clear the surface for the next step
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
+        # Draw the path so far in blue (line connecting the current path cells)
+        for i in range(len(path) - 1):
+            x1 = path[i].i * w + x_offset + w // 2
+            y1 = path[i].j * w + y_offset + w // 2
+            x2 = path[i + 1].i * w + x_offset + w // 2
+            y2 = path[i + 1].j * w + y_offset + w // 2
+            pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path
+
+        # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (600, 600), img_data)
         img_tk = ImageTk.PhotoImage(img)
@@ -285,6 +291,7 @@ def solve_maze_bfs():
         root.after(50, step)  # Continue to the next step
 
     step()
+
 
 def solve_maze_dfs():
     global start, goal
@@ -319,7 +326,7 @@ def solve_maze_dfs():
                 y2 = path[i + 1].j * w + y_offset + w // 2
                 pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
 
-            # Update the canvas with the path
+            # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (600, 600), img_data)
             img_tk = ImageTk.PhotoImage(img)
@@ -341,15 +348,25 @@ def solve_maze_dfs():
                     new_path = path + [current]
                     stack.append((neighbor, new_path))  # Push to stack
 
+        # Calculate and update execution time
         end_time = time.time()
         execution_time = round(end_time - start_time, 2)
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
 
-        # Update the canvas at each step
+        # Clear the surface for the next step and draw current state
         surface.fill((0, 0, 0))  # Clear the surface for the next step
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
+        # Draw the path so far in blue (line connecting the current path cells)
+        for i in range(len(path) - 1):
+            x1 = path[i].i * w + x_offset + w // 2
+            y1 = path[i].j * w + y_offset + w // 2
+            x2 = path[i + 1].i * w + x_offset + w // 2
+            y2 = path[i + 1].j * w + y_offset + w // 2
+            pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path
+
+        # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (600, 600), img_data)
         img_tk = ImageTk.PhotoImage(img)
@@ -357,6 +374,8 @@ def solve_maze_dfs():
         canvas.img = img_tk  # Keep reference to avoid garbage collection
 
         root.after(50, step)  # Continue to the next step
+
+        
 
     step()
 
