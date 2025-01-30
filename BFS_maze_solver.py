@@ -1,4 +1,6 @@
+from queue import PriorityQueue
 import time
+from networkx import neighbors
 import pygame
 import sys
 import random
@@ -33,8 +35,7 @@ def generate_maze():
     grid.clear()
     stack.clear()
 
-    start_time = time.time()
-    
+    start_time = time.time()  # Start measuring time
 
     # Calculate the offset to center the maze
     maze_width = cols * w
@@ -151,6 +152,12 @@ def generate_maze():
         elif stack:
             current = stack.pop()
 
+        # Calculate and update execution time
+        end_time = time.time()
+        execution_time = round(end_time - start_time, 2)
+        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
+        # Update the canvas with the maze
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (600, 600), img_data)
         img_tk = ImageTk.PhotoImage(img)
@@ -161,11 +168,7 @@ def generate_maze():
             root.after(50, step)  # Continue maze generation
         else:
             set_start_and_goal()
-            end_time = time.time()  # End the timer
-            execution_time = end_time - start_time  # Calculate execution time
-            execution_time_label.config(text=f"Execution Time: {execution_time}s")  # Update the label
-            messagebox.showinfo("Maze Generation", f"Maze generation complete! Time taken: {execution_time:.2f}s")
-            
+            messagebox.showinfo("Maze Generation", "Maze generation complete!")
 
     def set_start_and_goal():
         """Set the start and goal points after maze generation."""
@@ -208,12 +211,7 @@ def generate_maze():
     step()
 
 
-from collections import deque
-import pygame
-import time
-import tkinter as tk
-from tkinter import messagebox
-from PIL import Image, ImageTk
+
 
 def solve_maze_bfs():
     global start, goal
@@ -393,6 +391,109 @@ def solve_maze_dfs():
     step()
 
 
+def heuristic(cell1, cell2):
+    """Calculate Manhattan distance as heuristic."""
+    return abs(cell1.i - cell2.i) + abs(cell1.j - cell2.j)
+
+def solve_maze_astar():
+    global start, goal
+    open_set = PriorityQueue()
+    open_set.put((f_score[neighbors], id(neighbors), neighbors, sys.path + [current]))
+
+    came_from = {}  # Stores path information
+    g_score = {cell: float('inf') for cell in grid}
+    g_score[start] = 0
+    f_score = {cell: float('inf') for cell in grid}
+    f_score[start] = heuristic(start, goal)
+
+    start_time = time.time()
+    solving = True  # Flag to track if solving is still in progress
+
+    def index(i, j):
+        """Return the index of the cell based on row, column."""
+        if i < 0 or j < 0 or i >= cols or j >= rows:
+            return None
+        return i + j * cols
+
+    surface = pygame.Surface((600, 600))
+    surface.fill((0, 0, 0))
+
+    def step():
+        nonlocal solving
+        if open_set.empty():
+            messagebox.showinfo("Maze Solved", "No path found!")
+            return
+
+        _, current, path = open_set.get()
+
+        if current == goal:
+            solving = False  # Stop solving, clear blue lines
+
+        # Clear surface and redraw grid
+        surface.fill((0, 0, 0))
+        for cell in grid:
+            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
+
+        if solving:
+            # Draw solving process with blue lines
+            for i in range(len(path) - 1):
+                x1 = path[i].i * w + x_offset + w // 2
+                y1 = path[i].j * w + y_offset + w // 2
+                x2 = path[i + 1].i * w + x_offset + w // 2
+                y2 = path[i + 1].j * w + y_offset + w // 2
+                pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path while solving
+        else:
+            # Draw final path in red
+            final_path = path + [goal]
+            for i in range(len(final_path) - 1):
+                x1 = final_path[i].i * w + x_offset + w // 2
+                y1 = final_path[i].j * w + y_offset + w // 2
+                x2 = final_path[i + 1].i * w + x_offset + w // 2
+                y2 = final_path[i + 1].j * w + y_offset + w // 2
+                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)  # Red final path
+
+            # Update canvas with the final path
+            img_data = pygame.image.tostring(surface, "RGB")
+            img = Image.frombytes("RGB", (600, 600), img_data)
+            img_tk = ImageTk.PhotoImage(img)
+            canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+            canvas.img = img_tk  # Keep reference to avoid garbage collection
+
+            messagebox.showinfo("Maze Solved", "Maze solved using A*!")
+            return
+
+        # Explore neighbors
+        for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
+            ni, nj = current.i + di, current.j + dj
+            neighbor_idx = index(ni, nj)
+
+            if neighbor_idx is not None:
+                neighbor = grid[neighbor_idx]
+                if not current.walls[direction]:  # Check if the path is open
+                    temp_g_score = g_score[current] + 1
+                    if temp_g_score < g_score[neighbor]:
+                        g_score[neighbor] = temp_g_score
+                        f_score[neighbor] = temp_g_score + heuristic(neighbor, goal)
+                        open_set.put((f_score[neighbor], neighbor, path + [current]))
+                        came_from[neighbor] = current
+
+        # Update execution time
+        end_time = time.time()
+        execution_time = round(end_time - start_time, 2)
+        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
+        # Update canvas
+        img_data = pygame.image.tostring(surface, "RGB")
+        img = Image.frombytes("RGB", (600, 600), img_data)
+        img_tk = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+        canvas.img = img_tk  # Keep reference to avoid garbage collection
+
+        root.after(50, step)  # Continue next step
+
+    step()
+
+
 
 root = tk.Tk()
 root.title("Maze Solver")
@@ -421,10 +522,15 @@ bfs_radio.pack()
 dfs_radio = tk.Radiobutton(root, text="DFS", variable=algorithm_var, value="DFS")
 dfs_radio.pack()
 
+dfs_radio = tk.Radiobutton(root, text="A*", variable=algorithm_var, value="A*")
+dfs_radio.pack()
+
 def solve_maze_selected():
     """Calls the selected maze-solving algorithm."""
     if algorithm_var.get() == "BFS":
         solve_maze_bfs()  # Calls BFS
+    elif algorithm_var.get() == "A*":
+        solve_maze_astar()
     else:
         solve_maze_dfs()  # Calls DFS
 
