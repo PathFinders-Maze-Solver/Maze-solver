@@ -1,5 +1,7 @@
 from queue import PriorityQueue
+import heapq
 import time
+from turtle import Screen
 from networkx import neighbors
 import pygame
 import sys
@@ -48,6 +50,10 @@ def generate_maze():
             self.i, self.j = i, j
             self.walls = [True, True, True, True]
             self.visited = False
+            self.f_score = float('inf')  # Default f_score
+
+        def __lt__(self, other):
+            return self.f_score < other.f_score
 
         def show(self, surface, is_start=False, is_goal=False):
             x = self.i * w + x_offset
@@ -209,8 +215,6 @@ def generate_maze():
         canvas.img = img_tk  # Keep reference to avoid garbage collection
 
     step()
-
-
 
 
 def solve_maze_bfs():
@@ -386,73 +390,111 @@ def solve_maze_dfs():
 
         root.after(50, step)  # Continue to the next step
 
-        
-
     step()
 
 
-def heuristic(cell1, cell2):
-    """Calculate Manhattan distance as heuristic."""
-    return abs(cell1.i - cell2.i) + abs(cell1.j - cell2.j)
+def index(i, j):
+    """Return the index of the cell based on row, column."""
+    if i < 0 or j < 0 or i >= cols or j >= rows:
+        return None
+    return i + j * cols
 
-def solve_maze_astar():
+def reconstruct_path(came_from, current):
+    """Reconstruct the shortest path and visualize it step by step."""
+    while current in came_from:
+        previous = came_from[current]  # Get the previous cell in the path
+
+        # Draw a red line between current and previous cell
+        pygame.draw.line(
+            pygame.display.set_mode((cols * w, rows * w)), (255, 0, 0),
+            (current.i * w + w // 2, current.j * w + w // 2),  # Start position (center of cell)
+            (previous.i * w + w // 2, previous.j * w + w // 2),  # End position (center of previous cell)
+            5  # Thickness of the line
+        )
+
+        pygame.display.update()  # Update the display to show the change
+        time.sleep(0.1)  # Delay to visualize the step
+
+        current = previous  # Move to the previous cell in the path
+
+
+
+def a_star_algorithm():
     global start, goal
-    open_set = PriorityQueue()
-    open_set.put((f_score[neighbors], id(neighbors), neighbors, sys.path + [current]))
+    
+    def heuristic(a, b):
+        """Calculate Manhattan distance heuristic."""
+        return abs(a.i - b.i) + abs(a.j - b.j)
 
-    came_from = {}  # Stores path information
+    def get_neighbors(cell):
+        """Get valid neighboring cells."""
+        neighbors = []
+        directions = [
+            (0, -1),  # Up
+            (1, 0),   # Right
+            (0, 1),   # Down
+            (-1, 0)   # Left
+        ]
+        
+        for di, dj in directions:
+            ni, nj = cell.i + di, cell.j + dj
+            idx = index(ni, nj)
+            print(f"Checking neighbor at ({ni}, {nj}), idx: {idx}")  # Debugging
+            if idx is not None:
+                neighbor = grid[idx]            
+                if True:  # Replace with: if not neighbor.walls[directions.index((di, dj))]:
+                    neighbors.append(neighbor)
+
+        return neighbors
+
+    open_set = []
+    heapq.heappush(open_set, (0, start))  # Priority queue with (cost, node)
+    came_from = {}
     g_score = {cell: float('inf') for cell in grid}
     g_score[start] = 0
     f_score = {cell: float('inf') for cell in grid}
     f_score[start] = heuristic(start, goal)
 
-    start_time = time.time()
-    solving = True  # Flag to track if solving is still in progress
+    while open_set:
+        _, current = heapq.heappop(open_set)
 
-    def index(i, j):
-        """Return the index of the cell based on row, column."""
-        if i < 0 or j < 0 or i >= cols or j >= rows:
-            return None
-        return i + j * cols
+        if current == goal:
+            reconstruct_path(came_from, goal)
+            return
 
-    surface = pygame.Surface((600, 600))
-    surface.fill((0, 0, 0))
+        for neighbor in get_neighbors(current):
+            tentative_g_score = g_score[current] + 1  # Each step has a cost of 1
+            if tentative_g_score < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal)
+                heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
     def step():
-        nonlocal solving
-        if open_set.empty():
+        if not open_set:
             messagebox.showinfo("Maze Solved", "No path found!")
             return
 
-        _, current, path = open_set.get()
+        # Here we ensure the path is properly updated each time
+        current = open_set[0][1]  # Get the current element in open_set
 
         if current == goal:
-            solving = False  # Stop solving, clear blue lines
+            # If goal is reached, draw the path with red lines
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
 
-        # Clear surface and redraw grid
-        surface.fill((0, 0, 0))
-        for cell in grid:
-            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
+            path.reverse()  # Reverse the path to start from the start
 
-        if solving:
-            # Draw solving process with blue lines
             for i in range(len(path) - 1):
                 x1 = path[i].i * w + x_offset + w // 2
                 y1 = path[i].j * w + y_offset + w // 2
                 x2 = path[i + 1].i * w + x_offset + w // 2
                 y2 = path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path while solving
-        else:
-            # Draw final path in red
-            final_path = path + [goal]
-            for i in range(len(final_path) - 1):
-                x1 = final_path[i].i * w + x_offset + w // 2
-                y1 = final_path[i].j * w + y_offset + w // 2
-                x2 = final_path[i + 1].i * w + x_offset + w // 2
-                y2 = final_path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)  # Red final path
+                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
 
-            # Update canvas with the final path
+            # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (600, 600), img_data)
             img_tk = ImageTk.PhotoImage(img)
@@ -462,36 +504,27 @@ def solve_maze_astar():
             messagebox.showinfo("Maze Solved", "Maze solved using A*!")
             return
 
-        # Explore neighbors
-        for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
-            ni, nj = current.i + di, current.j + dj
-            neighbor_idx = index(ni, nj)
+        # Continue exploring neighbors and updating steps
+        for neighbor in get_neighbors(current):
+            tentative_g_score = g_score[current] + 1
+            if tentative_g_score < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal)
+                heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
-            if neighbor_idx is not None:
-                neighbor = grid[neighbor_idx]
-                if not current.walls[direction]:  # Check if the path is open
-                    temp_g_score = g_score[current] + 1
-                    if temp_g_score < g_score[neighbor]:
-                        g_score[neighbor] = temp_g_score
-                        f_score[neighbor] = temp_g_score + heuristic(neighbor, goal)
-                        open_set.put((f_score[neighbor], neighbor, path + [current]))
-                        came_from[neighbor] = current
+        # Draw the current state and progress
+        surface = pygame.display.set_mode((cols * w, rows * w))
+        surface.fill((0, 0, 0))  # Clear the surface for the next step
+        for cell in grid:
+            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
-        # Update execution time
-        end_time = time.time()
-        execution_time = round(end_time - start_time, 2)
-        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+        pygame.display.update()  # Update the canvas
 
-        # Update canvas
-        img_data = pygame.image.tostring(surface, "RGB")
-        img = Image.frombytes("RGB", (600, 600), img_data)
-        img_tk = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-        canvas.img = img_tk  # Keep reference to avoid garbage collection
-
-        root.after(50, step)  # Continue next step
+        root.after(50, step)  # Continue to the next step
 
     step()
+
 
 
 
@@ -530,7 +563,7 @@ def solve_maze_selected():
     if algorithm_var.get() == "BFS":
         solve_maze_bfs()  # Calls BFS
     elif algorithm_var.get() == "A*":
-        solve_maze_astar()
+        a_star_algorithm()
     else:
         solve_maze_dfs()  # Calls DFS
 
