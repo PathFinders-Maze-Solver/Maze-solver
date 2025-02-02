@@ -535,7 +535,7 @@ root.title("Maze Solver")
 
 #draw canvas to create maze
 canvas = tk.Canvas(root, width=width, height=height)
-canvas.pack()
+canvas.pack(side=tk.LEFT)
 
 #create time label
 execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
