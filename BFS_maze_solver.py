@@ -18,6 +18,8 @@ cols, rows, grid, stack, current, start, goal = 0, 0, [], [], None, None, None
 w = 0
 x_offset = 0
 y_offset = 0
+width = 500  # Adjust to a smaller value for your pygame window
+height = 500  # Adjust accordingly
 
 
 def generate_maze():
@@ -33,7 +35,7 @@ def generate_maze():
         return
 
     cols = rows = size
-    w = 600 // cols  # cell size
+    w = width // cols  # cell size
     grid.clear()
     stack.clear()
 
@@ -42,8 +44,8 @@ def generate_maze():
     # Calculate the offset to center the maze
     maze_width = cols * w
     maze_height = rows * w
-    x_offset = (600 - maze_width) // 2
-    y_offset = (600 - maze_height) // 2
+    x_offset = (width - maze_width) // 2
+    y_offset = (height - maze_height) // 2
 
     class Cell:
         def __init__(self, i, j):
@@ -140,7 +142,7 @@ def generate_maze():
                 pygame.quit()
                 sys.exit()
 
-        surface = pygame.Surface((600, 600))
+        surface = pygame.Surface((width, height))
         surface.fill((0, 0, 0))
 
         # Draw all cells
@@ -165,7 +167,7 @@ def generate_maze():
 
         # Update the canvas with the maze
         img_data = pygame.image.tostring(surface, "RGB")
-        img = Image.frombytes("RGB", (600, 600), img_data)
+        img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -202,14 +204,14 @@ def generate_maze():
             goal = random.choice([cell for cell in border_cells if cell != start])
 
         # Redraw the maze with start and goal points
-        surface = pygame.Surface((600, 600))
+        surface = pygame.Surface((width, height))
         surface.fill((0, 0, 0))
 
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
         img_data = pygame.image.tostring(surface, "RGB")
-        img = Image.frombytes("RGB", (600, 600), img_data)
+        img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -232,7 +234,7 @@ def solve_maze_bfs():
             return None
         return i + j * cols
 
-    surface = pygame.Surface((600, 600))
+    surface = pygame.Surface((width, height))
     surface.fill((0, 0, 0))
 
     def step():
@@ -271,7 +273,7 @@ def solve_maze_bfs():
 
             # Update the canvas with the final path and stop execution
             img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (600, 600), img_data)
+            img = Image.frombytes("RGB", (width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -298,7 +300,7 @@ def solve_maze_bfs():
 
         # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
-        img = Image.frombytes("RGB", (600, 600), img_data)
+        img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -322,7 +324,7 @@ def solve_maze_dfs():
             return None
         return i + j * cols
 
-    surface = pygame.Surface((600, 600))
+    surface = pygame.Surface((width, height))
     surface.fill((0, 0, 0))
 
     def step():
@@ -343,7 +345,7 @@ def solve_maze_dfs():
 
             # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (600, 600), img_data)
+            img = Image.frombytes("RGB",(width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -383,7 +385,7 @@ def solve_maze_dfs():
 
         # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
-        img = Image.frombytes("RGB", (600, 600), img_data)
+        img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -496,7 +498,7 @@ def a_star_algorithm():
 
             # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (600, 600), img_data)
+            img = Image.frombytes("RGB", (width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -527,13 +529,15 @@ def a_star_algorithm():
 
 
 
-
+#create tkinter window
 root = tk.Tk()
 root.title("Maze Solver")
 
-canvas = tk.Canvas(root, width=600, height=600)
+#draw canvas to create maze
+canvas = tk.Canvas(root, width=width, height=height)
 canvas.pack()
 
+#create time label
 execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
 execution_time_label.pack(pady=10)
 
@@ -543,6 +547,7 @@ size_label.pack()
 size_entry = tk.Entry(root)
 size_entry.pack()
 
+#create maze generation button
 generate_button = tk.Button(root, text="Generate Maze", command=generate_maze)
 generate_button.pack()
 
@@ -559,7 +564,7 @@ dfs_radio = tk.Radiobutton(root, text="A*", variable=algorithm_var, value="A*")
 dfs_radio.pack()
 
 def solve_maze_selected():
-    """Calls the selected maze-solving algorithm."""
+    """ Calls the selected maze-solving algorithm."""
     if algorithm_var.get() == "BFS":
         solve_maze_bfs()  # Calls BFS
     elif algorithm_var.get() == "A*":
@@ -567,6 +572,7 @@ def solve_maze_selected():
     else:
         solve_maze_dfs()  # Calls DFS
 
+#create maze solve button
 solve_button = tk.Button(root, text="Solve Maze", command=solve_maze_selected)
 solve_button.pack()
 
