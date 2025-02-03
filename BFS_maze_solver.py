@@ -251,7 +251,7 @@ def solve_maze_bfs():
             solving = False  # Mark as solved, so we clear the blue lines
 
         # Clear surface and redraw grid (except blue lines if still solving)
-        surface.fill((0, 0, 0))  
+        surface.fill((0, 0, 0))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -347,7 +347,7 @@ def solve_maze_dfs():
 
             # Update the canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB",(width, height), img_data)
+            img = Image.frombytes("RGB", (width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk  # Keep reference to avoid garbage collection
@@ -396,12 +396,13 @@ def solve_maze_dfs():
 
     step()
 
+
 def solve_maze_astar():
     global start, goal
     visited = set()  # Set to track visited nodes
     came_from = {}  # Dictionary to track the path (parent nodes)
     g_score = {start: 0}  # Dictionary to track cost to reach each node (g)
-    
+
     def heuristic(a, b):
         """Manhattan distance heuristic"""
         return abs(a.i - b.i) + abs(a.j - b.j)
@@ -445,7 +446,7 @@ def solve_maze_astar():
             solving = False  # Mark as solved
 
         # Clear surface and redraw grid (except blue lines if still solving)
-        surface.fill((0, 0, 0))  
+        surface.fill((0, 0, 0))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -509,40 +510,51 @@ def solve_maze_astar():
     step()
 
 
-
-#create tkinter window
+# create tkinter window
 root = tk.Tk()
 root.title("Maze Solver")
 
-#draw canvas to create maze
+# draw canvas to create maze
 canvas = tk.Canvas(root, width=width, height=height)
 canvas.pack()
 
-#create time label
+# create time label
 execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
 execution_time_label.pack(pady=10)
 
-# Input size entry
-size_label = tk.Label(root, text="Maze Size (e.g., 10):")
-size_label.pack()
-size_entry = tk.Entry(root)
-size_entry.pack()
+bottom_frame = tk.Frame(root)
+bottom_frame.pack(side=tk.BOTTOM, pady=10)  # Pack at the bottom with padding
 
-#create maze generation button
-generate_button = tk.Button(root, text="Generate Maze", command=generate_maze)
-generate_button.pack()
+# Maze Size Input
+size_label = tk.Label(bottom_frame, text="Maze Size:")
+size_label.pack(side=tk.LEFT, padx=5)
+size_entry = tk.Entry(bottom_frame, width=5)
+size_entry.pack(side=tk.LEFT, padx=5)
 
-# Radio buttons to select algorithm
+# Generate Maze Button
+generate_button = tk.Button(bottom_frame, text="Generate Maze", command=generate_maze)
+generate_button.pack(side=tk.LEFT, padx=5)
+
+# Algorithm Selection Label
+algo_label = tk.Label(bottom_frame, text="Algorithm:")
+algo_label.pack(side=tk.LEFT, padx=5)
+
+# Frame for radio buttons (to keep them together in a single row)
+algo_frame = tk.Frame(bottom_frame)
+algo_frame.pack(side=tk.LEFT)  # Pack inside the bottom_frame
+
+# Algorithm Selection (BFS, DFS, A*)
 algorithm_var = tk.StringVar(value="BFS")  # Default selection is BFS
 
-bfs_radio = tk.Radiobutton(root, text="BFS", variable=algorithm_var, value="BFS")
-bfs_radio.pack()
+bfs_radio = tk.Radiobutton(algo_frame, text="BFS", variable=algorithm_var, value="BFS")
+bfs_radio.pack(side=tk.LEFT, padx=5)
 
-dfs_radio = tk.Radiobutton(root, text="DFS", variable=algorithm_var, value="DFS")
-dfs_radio.pack()
+dfs_radio = tk.Radiobutton(algo_frame, text="DFS", variable=algorithm_var, value="DFS")
+dfs_radio.pack(side=tk.LEFT, padx=5)
 
-dfs_radio = tk.Radiobutton(root, text="A*", variable=algorithm_var, value="A*")
-dfs_radio.pack()
+astar_radio = tk.Radiobutton(algo_frame, text="A*", variable=algorithm_var, value="A*")
+astar_radio.pack(side=tk.LEFT, padx=5)
+
 
 def solve_maze_selected():
     """ Calls the selected maze-solving algorithm."""
@@ -553,8 +565,9 @@ def solve_maze_selected():
     else:
         solve_maze_dfs()  # Calls DFS
 
-#create maze solve button
-solve_button = tk.Button(root, text="Solve Maze", command=solve_maze_selected)
-solve_button.pack()
+
+# create maze solve button
+solve_button = tk.Button(bottom_frame, text="Solve Maze", command=solve_maze_selected)
+solve_button.pack(side=tk.LEFT, padx=10) 
 
 root.mainloop()
