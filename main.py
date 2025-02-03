@@ -504,7 +504,19 @@ def solve_maze_selected():
     else:
         solve_maze_dfs()  # Calls DFS
 
-        
+
+# Function to reset the maze
+def reset_maze():
+    global cols, rows, grid, stack, current, start, goal
+    cols, rows = 0, 0
+    grid.clear()
+    stack.clear()
+    start, goal = None, None
+    canvas.delete("all")  # Clear the canvas
+    execution_time_label.config(text="Execution Time: 0s")  # Reset execution time label
+    size_entry.delete(0, tk.END)  # Clear the maze size input
+
+       
 # create tkinter window
 root = tk.Tk()
 root.title("Maze Solver")
@@ -526,6 +538,10 @@ size_entry.pack(side=tk.LEFT, padx=5)
 # Generate maze button
 generate_button = tk.Button(top_frame, text="Generate Maze", command=generate_maze)
 generate_button.pack(side=tk.LEFT, padx=5)
+
+# Add Reset Maze button
+reset_button = tk.Button(top_frame, text="Reset Maze", command=reset_maze)
+reset_button.pack(side=tk.LEFT, padx=5)  # Adjust padding as needed
 
 # create maze solve button
 solve_button = tk.Button(top_frame, text="Solve Maze", command=solve_maze_selected)
