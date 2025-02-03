@@ -337,7 +337,7 @@ def solve_maze_dfs():
         current, path = stack.pop()  # Pop from the stack (DFS behavior)
 
         if current == goal:
-            # If goal is reached, draw the path with red lines
+            path.append(goal)  # Ensure the final step to goal is included
             for i in range(len(path) - 1):
                 x1 = path[i].i * w + x_offset + w // 2
                 y1 = path[i].j * w + y_offset + w // 2
