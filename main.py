@@ -21,7 +21,6 @@ y_offset = 0
 width = 600  # Adjust to a smaller value for your pygame window
 height = 600  # Adjust accordingly
 
-
 def generate_maze():
     global cols, rows, grid, stack, current, start, goal, w
     try:
@@ -205,9 +204,29 @@ def generate_maze():
             # If no valid goal cells, fall back to selecting randomly
             goal = random.choice([cell for cell in border_cells if cell != start])
 
+                # Remove walls for start cell based on its border location
+        if start.i == 0:  # Left border
+            start.walls[3] = False
+        elif start.i == cols - 1:  # Right border
+            start.walls[1] = False
+        elif start.j == 0:  # Top border
+            start.walls[0] = False
+        elif start.j == rows - 1:  # Bottom border
+            start.walls[2] = False
+
+        # Remove walls for goal cell based on its border location
+        if goal.i == 0:  # Left border
+            goal.walls[3] = False
+        elif goal.i == cols - 1:  # Right border
+            goal.walls[1] = False
+        elif goal.j == 0:  # Top border
+            goal.walls[0] = False
+        elif goal.j == rows - 1:  # Bottom border
+            goal.walls[2] = False
+
         # Redraw the maze with start and goal points
         surface = pygame.Surface((width, height))
-        surface.fill((0, 0, 0))
+        surface.fill((255, 255, 255))
 
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
@@ -216,7 +235,7 @@ def generate_maze():
         img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-        canvas.img = img_tk  # Keep reference to avoid garbage collection
+        canvas.img = img_tk
 
     step()
 
@@ -237,7 +256,7 @@ def solve_maze_bfs():
         return i + j * cols
 
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def step():
         nonlocal solving  # Track solving status
@@ -251,7 +270,7 @@ def solve_maze_bfs():
             solving = False  # Mark as solved, so we clear the blue lines
 
         # Clear surface and redraw grid (except blue lines if still solving)
-        surface.fill((0, 0, 0))
+        surface.fill((255, 255, 255))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -327,7 +346,7 @@ def solve_maze_dfs():
         return i + j * cols
 
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def step():
         if not stack:
@@ -373,7 +392,7 @@ def solve_maze_dfs():
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
 
         # Clear the surface for the next step and draw current state
-        surface.fill((0, 0, 0))  # Clear the surface for the next step
+        surface.fill((255, 255, 255))  # Clear the surface for the next step
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -412,7 +431,7 @@ def solve_maze_astar():
 
     start_time = time.time()
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def index(i, j):
         if i < 0 or j < 0 or i >= cols or j >= rows:
@@ -453,7 +472,7 @@ def solve_maze_astar():
             messagebox.showinfo("Maze Solved", "Maze solved using A*!")
             return
 
-        surface.fill((0, 0, 0))
+        surface.fill((255, 255, 255))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
