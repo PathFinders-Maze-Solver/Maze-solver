@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 
 # Load the image
-image = cv2.imread('maze.png')
+image = cv2.imread('Maze_images\Maze6.png')
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # Apply Gaussian Blur to smooth edges
