@@ -269,7 +269,7 @@ def solve_maze_bfs():
         return i + j * cols
 
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def step():
         nonlocal solving  # Track solving status
@@ -283,7 +283,7 @@ def solve_maze_bfs():
             solving = False  # Mark as solved, so we clear the blue lines
 
         # Clear surface and redraw grid (except blue lines if still solving)
-        surface.fill((0, 0, 0))
+        surface.fill((255, 255, 255))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -359,7 +359,7 @@ def solve_maze_dfs():
         return i + j * cols
 
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def step():
         if not stack:
@@ -405,7 +405,7 @@ def solve_maze_dfs():
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
 
         # Clear the surface for the next step and draw current state
-        surface.fill((0, 0, 0))  # Clear the surface for the next step
+        surface.fill((255, 255, 255))  # Clear the surface for the next step
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
@@ -444,7 +444,7 @@ def solve_maze_astar():
 
     start_time = time.time()
     surface = pygame.Surface((width, height))
-    surface.fill((0, 0, 0))
+    surface.fill((255, 255, 255))
 
     def index(i, j):
         if i < 0 or j < 0 or i >= cols or j >= rows:
@@ -485,7 +485,7 @@ def solve_maze_astar():
             messagebox.showinfo("Maze Solved", "Maze solved using A*!")
             return
 
-        surface.fill((0, 0, 0))
+        surface.fill((255, 255, 255))
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
