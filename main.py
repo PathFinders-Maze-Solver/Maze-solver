@@ -402,7 +402,7 @@ def solve_maze_astar():
     visited = set()
     came_from = {}
     g_score = {start: 0}
-    
+
     def heuristic(a, b):
         return abs(a.i - b.i) + abs(a.j - b.j)
 
@@ -434,7 +434,7 @@ def solve_maze_astar():
             return
 
         _, current = heapq.heappop(open_set)
-        
+
         if current == goal:
             final_path = reconstruct_path(came_from, current)
             for i in range(len(final_path) - 1):
@@ -443,13 +443,13 @@ def solve_maze_astar():
                 x2 = final_path[i + 1].i * w + x_offset + w // 2
                 y2 = final_path[i + 1].j * w + y_offset + w // 2
                 pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
-            
+
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
             canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
             canvas.img = img_tk
-            
+
             messagebox.showinfo("Maze Solved", "Maze solved using A*!")
             return
 
@@ -464,11 +464,11 @@ def solve_maze_astar():
             x2 = path[i + 1].i * w + x_offset + w // 2
             y2 = path[i + 1].j * w + y_offset + w // 2
             pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)
-        
+
         for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
             ni, nj = current.i + di, current.j + dj
             neighbor_idx = index(ni, nj)
-            
+
             if neighbor_idx is not None:
                 neighbor = grid[neighbor_idx]
                 if neighbor not in visited and not current.walls[direction]:
@@ -478,21 +478,20 @@ def solve_maze_astar():
                         g_score[neighbor] = tentative_g_score
                         f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
                         heapq.heappush(open_set, (f_score[neighbor], neighbor))
-        
+
         end_time = time.time()
         execution_time = round(end_time - start_time, 2)
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
-        
+
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk
-        
-        root.after(50, step)
-    
-    step()
 
+        root.after(50, step)
+
+    step()
 
 
 def solve_maze_selected():
@@ -506,17 +505,30 @@ def solve_maze_selected():
 
 
 # Function to reset the maze
-def reset_maze():
+def clear_maze():
     global cols, rows, grid, stack, current, start, goal
     cols, rows = 0, 0
     grid.clear()
     stack.clear()
     start, goal = None, None
     canvas.delete("all")  # Clear the canvas
-    execution_time_label.config(text="Execution Time: 0s")  # Reset execution time label
+    execution_time_label.config(text="Execution Time: 0s")  # clear execution time label
     size_entry.delete(0, tk.END)  # Clear the maze size input
 
-       
+
+def reset_maze():
+    """Resets the maze while keeping the current size."""
+    try:
+        size = int(size_entry.get())  # Get the same size
+        if size <= 0:
+            raise ValueError
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter a valid maze size before resetting.")
+        return
+
+    generate_maze()  # Regenerate the maze with the same size
+
+
 # create tkinter window
 root = tk.Tk()
 root.title("Maze Solver")
@@ -539,13 +551,17 @@ size_entry.pack(side=tk.LEFT, padx=5)
 generate_button = tk.Button(top_frame, text="Generate Maze", command=generate_maze)
 generate_button.pack(side=tk.LEFT, padx=5)
 
+# Add clear Maze button
+clear_button = tk.Button(top_frame, text="Clear Maze", command=clear_maze)
+clear_button.pack(side=tk.LEFT, padx=5)  # Adjust padding as needed
+
 # Add Reset Maze button
 reset_button = tk.Button(top_frame, text="Reset Maze", command=reset_maze)
 reset_button.pack(side=tk.LEFT, padx=5)  # Adjust padding as needed
 
 # create maze solve button
 solve_button = tk.Button(top_frame, text="Solve Maze", command=solve_maze_selected)
-solve_button.pack(side=tk.RIGHT, padx=10) 
+solve_button.pack(side=tk.RIGHT, padx=10)
 
 # Algorithm selection radio buttons
 algo_frame = tk.Frame(top_frame, bg="#d3d3d3")
