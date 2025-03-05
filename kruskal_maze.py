@@ -253,6 +253,47 @@ def generate_maze():
     step()
 
 
+def update_gui(path, solving, surface):
+    surface.fill((255, 255, 255))  # Clear the surface
+    for cell in grid:
+        cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
+
+    # Display the current state of the maze as BFS solves it
+    if solving:
+        # Draw real-time solving process with blue lines
+        for i in range(len(path) - 1):
+            x1 = path[i].i * w + x_offset + w // 2
+            y1 = path[i].j * w + y_offset + w // 2
+            x2 = path[i + 1].i * w + x_offset + w // 2
+            y2 = path[i + 1].j * w + y_offset + w // 2
+            pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path while solving
+    else:
+        # If solved, draw only the final path in red
+        final_path = path + [goal]  # Include goal in the final path
+        for i in range(len(final_path) - 1):
+            x1 = final_path[i].i * w + x_offset + w // 2
+            y1 = final_path[i].j * w + y_offset + w // 2
+            x2 = final_path[i + 1].i * w + x_offset + w // 2
+            y2 = final_path[i + 1].j * w + y_offset + w // 2
+            pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)  # Red final path
+
+        # Show the solved path on the canvas
+        img_data = pygame.image.tostring(surface, "RGB")
+        img = Image.frombytes("RGB", (width, height), img_data)
+        img_tk = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+        canvas.img = img_tk  # Keep reference to avoid garbage collection
+
+        messagebox.showinfo("Maze Solved", "Maze solved")
+        return  # Exit after solving
+
+def index(i, j):
+    """Return the index of the cell based on row, column."""
+    if i < 0 or j < 0 or i >= cols or j >= rows:
+        return None
+    return i + j * cols
+
+
 def solve_maze_bfs():
     global start, goal
     visited = set()
@@ -261,12 +302,6 @@ def solve_maze_bfs():
 
     start_time = time.time()
     solving = True  # Flag to track if solving is still in progress
-
-    def index(i, j):
-        """Return the index of the cell based on row, column."""
-        if i < 0 or j < 0 or i >= cols or j >= rows:
-            return None
-        return i + j * cols
 
     surface = pygame.Surface((width, height))
     surface.fill((255, 255, 255))
@@ -282,38 +317,8 @@ def solve_maze_bfs():
         if current == goal:
             solving = False  # Mark as solved, so we clear the blue lines
 
-        # Clear surface and redraw grid (except blue lines if still solving)
-        surface.fill((255, 255, 255))
-        for cell in grid:
-            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
-
-        if solving:
-            # Draw solving process with blue lines
-            for i in range(len(path) - 1):
-                x1 = path[i].i * w + x_offset + w // 2
-                y1 = path[i].j * w + y_offset + w // 2
-                x2 = path[i + 1].i * w + x_offset + w // 2
-                y2 = path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path while solving
-        else:
-            # If solved, draw only the final path in red
-            final_path = path + [goal]  # Include goal in the final path
-            for i in range(len(final_path) - 1):
-                x1 = final_path[i].i * w + x_offset + w // 2
-                y1 = final_path[i].j * w + y_offset + w // 2
-                x2 = final_path[i + 1].i * w + x_offset + w // 2
-                y2 = final_path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)  # Red final path
-
-            # Update the canvas with the final path and stop execution
-            img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (width, height), img_data)
-            img_tk = ImageTk.PhotoImage(img)
-            canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-            canvas.img = img_tk  # Keep reference to avoid garbage collection
-
-            messagebox.showinfo("Maze Solved", "Maze solved using BFS!")
-            return
+        # Update the GUI at each step
+        update_gui(path, solving, surface)
 
         # Explore neighbors and add to the queue
         for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
@@ -339,10 +344,12 @@ def solve_maze_bfs():
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
 
-        root.after(50, step)  # Continue to the next step
+        # Continue solving until the goal is reached
+        if solving:
+            root.after(50, step)  # Continue to the next step
 
+    # Start the first step
     step()
-
 
 def solve_maze_dfs():
     global start, goal
@@ -351,43 +358,26 @@ def solve_maze_dfs():
     visited.add(start)
 
     start_time = time.time()
-
-    def index(i, j):
-        """Return the index of the cell based on row, column."""
-        if i < 0 or j < 0 or i >= cols or j >= rows:
-            return None
-        return i + j * cols
+    solving = True  # Flag to track if solving is still in progress
 
     surface = pygame.Surface((width, height))
     surface.fill((255, 255, 255))
 
     def step():
+        nonlocal solving  # Track solving status
         if not stack:
             messagebox.showinfo("Maze Solved", "No path found!")
             return
 
-        current, path = stack.pop()  # Pop from the stack (DFS behavior)
+        current, path = stack.pop()
 
         if current == goal:
-            path.append(goal)  # Ensure the final step to goal is included
-            for i in range(len(path) - 1):
-                x1 = path[i].i * w + x_offset + w // 2
-                y1 = path[i].j * w + y_offset + w // 2
-                x2 = path[i + 1].i * w + x_offset + w // 2
-                y2 = path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
+            solving = False  # Mark as solved, so we clear the blue lines
 
-            # Update the canvas with the final path
-            img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (width, height), img_data)
-            img_tk = ImageTk.PhotoImage(img)
-            canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-            canvas.img = img_tk  # Keep reference to avoid garbage collection
+        # Update the GUI at each step
+        update_gui(path, solving, surface)
 
-            messagebox.showinfo("Maze Solved", "Maze solved using DFS!")
-            return
-
-        # Explore neighbors (same order as BFS)
+        # Explore neighbors and add to the stack
         for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
             ni, nj = current.i + di, current.j + dj
             neighbor_idx = index(ni, nj)
@@ -397,25 +387,12 @@ def solve_maze_dfs():
                 if neighbor not in visited and not current.walls[direction]:
                     visited.add(neighbor)
                     new_path = path + [current]
-                    stack.append((neighbor, new_path))  # Push to stack
+                    stack.append((neighbor, new_path))
 
         # Calculate and update execution time
         end_time = time.time()
         execution_time = round(end_time - start_time, 2)
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
-
-        # Clear the surface for the next step and draw current state
-        surface.fill((255, 255, 255))  # Clear the surface for the next step
-        for cell in grid:
-            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
-
-        # Draw the path so far in blue (line connecting the current path cells)
-        for i in range(len(path) - 1):
-            x1 = path[i].i * w + x_offset + w // 2
-            y1 = path[i].j * w + y_offset + w // 2
-            x2 = path[i + 1].i * w + x_offset + w // 2
-            y2 = path[i + 1].j * w + y_offset + w // 2
-            pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for path
 
         # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
@@ -424,79 +401,50 @@ def solve_maze_dfs():
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk  # Keep reference to avoid garbage collection
 
-        root.after(50, step)  # Continue to the next step
+        # Continue solving until the goal is reached
+        if solving:
+            root.after(50, step)  # Continue to the next step
 
+    # Start the first step
     step()
 
 
-def solve_maze_astar():
+def heuristic(cell, goal):
+    """Calculate the Manhattan distance heuristic."""
+    return abs(cell.i - goal.i) + abs(cell.j - goal.j)
+
+def solve_maze_a_star():
     global start, goal
+    open_list = []  # Priority queue (min-heap) for A*
+    heapq.heappush(open_list, (0, start, []))  # (f, cell, path_to_here)
+    came_from = {}  # To reconstruct the path
+    g_score = {start: 0}  # Cost from start to the current cell
+    f_score = {start: heuristic(start, goal)}  # Estimated cost from start to goal through current cell
+
     visited = set()
-    came_from = {}
-    g_score = {start: 0}
-
-    def heuristic(a, b):
-        return abs(a.i - b.i) + abs(a.j - b.j)
-
-    f_score = {start: heuristic(start, goal)}
-    open_set = []
-    heapq.heappush(open_set, (f_score[start], start))
 
     start_time = time.time()
+    solving = True  # Flag to track if solving is still in progress
+
     surface = pygame.Surface((width, height))
     surface.fill((255, 255, 255))
 
-    def index(i, j):
-        if i < 0 or j < 0 or i >= cols or j >= rows:
-            return None
-        return i + j * cols
-
-    def reconstruct_path(came_from, current):
-        path = []
-        while current in came_from:
-            path.append(current)
-            current = came_from[current]
-        path.append(start)
-        path.reverse()
-        return path
-
     def step():
-        if not open_set:
+        nonlocal solving  # Track solving status
+        if not open_list:
             messagebox.showinfo("Maze Solved", "No path found!")
             return
 
-        _, current = heapq.heappop(open_set)
+        # Get the node with the lowest f_score
+        _, current, path = heapq.heappop(open_list)
 
         if current == goal:
-            final_path = reconstruct_path(came_from, current)
-            for i in range(len(final_path) - 1):
-                x1 = final_path[i].i * w + x_offset + w // 2
-                y1 = final_path[i].j * w + y_offset + w // 2
-                x2 = final_path[i + 1].i * w + x_offset + w // 2
-                y2 = final_path[i + 1].j * w + y_offset + w // 2
-                pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)
+            solving = False  # Mark as solved, so we clear the blue lines
 
-            img_data = pygame.image.tostring(surface, "RGB")
-            img = Image.frombytes("RGB", (width, height), img_data)
-            img_tk = ImageTk.PhotoImage(img)
-            canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-            canvas.img = img_tk
+        # Update the GUI at each step
+        update_gui(path, solving, surface)
 
-            messagebox.showinfo("Maze Solved", "Maze solved using A*!")
-            return
-
-        surface.fill((255, 255, 255))
-        for cell in grid:
-            cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
-
-        path = reconstruct_path(came_from, current)
-        for i in range(len(path) - 1):
-            x1 = path[i].i * w + x_offset + w // 2
-            y1 = path[i].j * w + y_offset + w // 2
-            x2 = path[i + 1].i * w + x_offset + w // 2
-            y2 = path[i + 1].j * w + y_offset + w // 2
-            pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)
-
+        # Explore neighbors and add to the open list
         for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
             ni, nj = current.i + di, current.j + dj
             neighbor_idx = index(ni, nj)
@@ -504,25 +452,32 @@ def solve_maze_astar():
             if neighbor_idx is not None:
                 neighbor = grid[neighbor_idx]
                 if neighbor not in visited and not current.walls[direction]:
-                    tentative_g_score = g_score[current] + 1
+                    tentative_g_score = g_score[current] + 1  # Assuming all moves cost 1
+
+                    # If this path to the neighbor is better, update the scores and path
                     if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                         came_from[neighbor] = current
                         g_score[neighbor] = tentative_g_score
                         f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
-                        heapq.heappush(open_set, (f_score[neighbor], neighbor))
+                        heapq.heappush(open_list, (f_score[neighbor], neighbor, path + [current]))
 
+        # Calculate and update execution time
         end_time = time.time()
         execution_time = round(end_time - start_time, 2)
         execution_time_label.config(text=f"Execution Time: {execution_time}s")
 
+        # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
         img = Image.frombytes("RGB", (width, height), img_data)
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
-        canvas.img = img_tk
+        canvas.img = img_tk  # Keep reference to avoid garbage collection
 
-        root.after(50, step)
+        # Continue solving until the goal is reached
+        if solving:
+            root.after(50, step)  # Continue to the next step
 
+    # Start the first step
     step()
 
 
@@ -531,21 +486,9 @@ def solve_maze_selected():
     if algorithm_var.get() == "BFS":
         solve_maze_bfs()  # Calls BFS
     elif algorithm_var.get() == "A*":
-        solve_maze_astar()
+        solve_maze_a_star()
     else:
         solve_maze_dfs()  # Calls DFS
-
-
-# Function to clear the maze
-def clear_maze():
-    global cols, rows, grid, stack, current, start, goal
-    cols, rows = 0, 0
-    grid.clear()
-    stack.clear()
-    start, goal = None, None
-    canvas.delete("all")  # Clear the canvas
-    execution_time_label.config(text="Execution Time: 0s")  # clear execution time label
-    size_entry.delete(0, tk.END)  # Clear the maze size input
 
 
 def reset_maze():
@@ -559,6 +502,18 @@ def reset_maze():
         return
 
     generate_maze()  # Regenerate the maze with the same size
+
+# Function to clear the maze
+def clear_maze():
+    global cols, rows, grid, stack, current, start, goal
+    cols, rows = 0, 0
+    grid.clear()
+    stack.clear()
+    start, goal = None, None
+    canvas.delete("all")  # Clear the canvas
+    execution_time_label.config(text="Execution Time: 0s")  # clear execution time label
+    size_entry.delete(0, tk.END)  # Clear the maze size input
+
 
 
 # create tkinter window
