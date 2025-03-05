@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk
 import random
 from collections import deque
 
@@ -23,10 +22,8 @@ def select_image():
     file_path = filedialog.askopenfilename(title="Select a Maze Image",
                                            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
     if file_path:
-        print(f"Selected Image: {file_path}")
         generate_button.config(state=tk.NORMAL)  # Enable "Generate Maze" button
     else:
-        print("No image selected.")
         generate_button.config(state=tk.DISABLED)  # Disable button if no image is selected
 
 
@@ -37,6 +34,52 @@ def index(i, j):
     return i + j * cols
 
 
+def find_center_of_opening(openings):
+    """Find the center-most open cell from a given list of open positions."""
+    if not openings:
+        return None
+    return grid[index(*openings[len(openings) // 2])]
+
+
+def find_start_end_points():
+    """Ensure start and end points take the width of one full cell."""
+    global start_cell, end_cell
+
+    def find_valid_openings(edge_cells):
+        """Find continuous openings at least one cell wide."""
+        valid_openings = []
+        temp_opening = []
+
+        for i, j in edge_cells:
+            if not grid[index(i, j)].is_wall:
+                temp_opening.append((i, j))
+            else:
+                if len(temp_opening) >= w:  # Ensure it's at least 1 cell wide
+                    valid_openings.append(temp_opening)
+                temp_opening = []
+
+        if len(temp_opening) >= w:
+            valid_openings.append(temp_opening)
+
+        return valid_openings
+
+    # Find valid openings at least one cell wide
+    top_openings = find_valid_openings([(i, 0) for i in range(cols)])
+    bottom_openings = find_valid_openings([(i, rows - 1) for i in range(cols)])
+    left_openings = find_valid_openings([(0, j) for j in range(rows)])
+    right_openings = find_valid_openings([(cols - 1, j) for j in range(rows)])
+
+    # Choose the central cell of the widest opening
+    start_opening = top_openings[0] if top_openings else (left_openings[0] if left_openings else [])
+    end_opening = bottom_openings[0] if bottom_openings else (right_openings[0] if right_openings else [])
+
+    start_cell = grid[index(*start_opening[len(start_opening) // 2])] if start_opening else None
+    end_cell = grid[index(*end_opening[len(end_opening) // 2])] if end_opening else None
+
+    if not start_cell or not end_cell:
+        messagebox.showerror("Error", "Could not find valid start or end points!")
+
+
 def generate_maze():
     """Generate a maze from an input image, removing outer padding."""
     global cols, rows, grid, w, x_offset, y_offset, walls, start_cell, end_cell
@@ -45,11 +88,9 @@ def generate_maze():
         messagebox.showerror("Error", "Please select an image first!")
         return
 
-    # Load and process image
     image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
     _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
 
-    # Find the first and last row/column that contains a black pixel (wall)
     coords = np.column_stack(np.where(binary == 0))  # Get all black pixel coordinates
     if coords.size == 0:
         messagebox.showerror("Error", "No maze found in the image!")
@@ -57,13 +98,10 @@ def generate_maze():
 
     y_min, x_min = coords.min(axis=0)
     y_max, x_max = coords.max(axis=0)
-
-    # Crop the image to remove white padding
     cropped_binary = binary[y_min:y_max + 1, x_min:x_max + 1]
-
     rows, cols = cropped_binary.shape
-    w = min(width // cols, height // rows)
 
+    w = min(20, width // cols, height // rows)  # Increase cell size, default to 20
     x_offset = (width - cols * w) // 2
     y_offset = (height - rows * w) // 2
 
@@ -74,130 +112,56 @@ def generate_maze():
         def __init__(self, i, j, is_wall):
             self.i, self.j = i, j
             self.is_wall = is_wall
-            self.walls = [True, True, True, True]
-            self.parent = self
-            self.rank = 0
 
     for j in range(rows):
         for i in range(cols):
             is_wall = cropped_binary[j, i] == 0
             grid.append(Cell(i, j, is_wall))
 
-    # Generate walls between cells
-    for j in range(rows):
-        for i in range(cols):
-            cell = grid[index(i, j)]
-            if not cell.is_wall:
-                if i < cols - 1 and not grid[index(i + 1, j)].is_wall:
-                    walls.append((cell, grid[index(i + 1, j)], 1))
-                if j < rows - 1 and not grid[index(i, j + 1)].is_wall:
-                    walls.append((cell, grid[index(i, j + 1)], 2))
-
-    random.shuffle(walls)
     find_start_end_points()
     draw_maze()
     generate_button.config(state=tk.DISABLED)
+    solve_button.config(state=tk.NORMAL)
 
 
-def find_border_openings():
-    """Detect all open cells on the maze border."""
-    openings = []
-
-    # Check top and bottom borders
-    for i in range(cols):
-        if not grid[index(i, 0)].is_wall:
-            openings.append((i, 0))  # Top border
-        if not grid[index(i, rows - 1)].is_wall:
-            openings.append((i, rows - 1))  # Bottom border
-
-    # Check left and right borders
-    for j in range(rows):
-        if not grid[index(0, j)].is_wall:
-            openings.append((0, j))  # Left border
-        if not grid[index(cols - 1, j)].is_wall:
-            openings.append((cols - 1, j))  # Right border
-
-    print(f"Detected Border Openings: {openings}")
-    return openings
-
-
-def bfs(start_cell):
-    """Perform BFS to find the farthest point in the maze from the start cell."""
-    visited = set()
-    queue = deque([start_cell])
-    visited.add(start_cell)
-
-    # Direction vectors for moving (up, down, left, right)
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-    farthest_cell = start_cell
-
-    while queue:
-        current_cell = queue.popleft()
-
-        # Check all 4 neighbors
-        for dx, dy in directions:
-            ni, nj = current_cell.i + dx, current_cell.j + dy
-
-            if 0 <= ni < cols and 0 <= nj < rows and (ni, nj) not in visited:
-                neighbor_cell = grid[index(ni, nj)]
-
-                if not neighbor_cell.is_wall:
-                    visited.add((ni, nj))
-                    queue.append(neighbor_cell)
-
-                    # Update farthest cell
-                    farthest_cell = neighbor_cell
-
-    return farthest_cell
-
-
-def find_start_end_points():
-    """Ensure start and end points are selected strictly from outer wall openings."""
-    global start_cell, end_cell
-
-    openings = find_border_openings()
-
-    if len(openings) < 2:
-        messagebox.showerror("Error", "Not enough border openings to set start and end points!")
+def solve_maze_bfs():
+    """Solve the maze using BFS and visualize the path."""
+    if not start_cell or not end_cell:
+        messagebox.showerror("Error", "Start or End cell not set!")
         return
 
-    # Randomly select a start position from the detected outer wall openings
-    start_pos = random.choice(openings)
-    start_cell = grid[index(start_pos[0], start_pos[1])]
+    queue = deque([(start_cell, [])])
+    visited = set()
+    visited.add(start_cell)
 
-    # Use BFS to find the farthest outer border opening from the start
-    farthest_cell = bfs(start_cell)
+    while queue:
+        current_cell, path = queue.popleft()
+        path.append(current_cell)
 
-    # Find the farthest valid border opening (ensuring it is an exit)
-    valid_endings = [grid[index(x, y)] for x, y in openings if (x, y) != (start_cell.i, start_cell.j)]
+        if current_cell == end_cell:
+            draw_solution(path)
+            return
 
-    if valid_endings:
-        # Choose the one farthest from the start
-        end_cell = max(valid_endings, key=lambda cell: abs(cell.i - start_cell.i) + abs(cell.j - start_cell.j))
-    else:
-        end_cell = farthest_cell  # Fallback (should not happen if maze has at least 2 openings)
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        for dx, dy in directions:
+            ni, nj = current_cell.i + dx, current_cell.j + dy
+            neighbor_index = index(ni, nj)
+            if neighbor_index is not None:
+                neighbor_cell = grid[neighbor_index]
+                if not neighbor_cell.is_wall and neighbor_cell not in visited:
+                    visited.add(neighbor_cell)
+                    queue.append((neighbor_cell, path.copy()))
 
-    print(f"Start: ({start_cell.i}, {start_cell.j}) (Green), End: ({end_cell.i}, {end_cell.j}) (Red)")
+    messagebox.showinfo("Maze Solver", "No path found!")
 
 
-def detect_outer_walls():
-    """Detect open cells on outer walls."""
-    outer_walls = []
-
-    for i in range(cols):
-        if not grid[index(i, 0)].is_wall:
-            outer_walls.append((i, 0, "Top"))
-        if not grid[index(i, rows - 1)].is_wall:
-            outer_walls.append((i, rows - 1, "Bottom"))
-
-    for j in range(rows):
-        if not grid[index(0, j)].is_wall:
-            outer_walls.append((0, j, "Left"))
-        if not grid[index(cols - 1, j)].is_wall:
-            outer_walls.append((cols - 1, j, "Right"))
-
-    return outer_walls
+def draw_solution(path):
+    """Draw the solution path on the maze."""
+    for cell in path:
+        x = cell.i * w + x_offset
+        y = cell.j * w + y_offset
+        canvas.create_rectangle(x, y, x + w, y + w, fill="blue", outline="blue")
+    canvas.update()
 
 
 def draw_maze():
@@ -207,22 +171,34 @@ def draw_maze():
     for cell in grid:
         x = cell.i * w + x_offset
         y = cell.j * w + y_offset
-
         color = "black" if cell.is_wall else "white"
         canvas.create_rectangle(x, y, x + w, y + w, fill=color, outline=color)
+
+    # Increase the size of start and end cells
+    extra_size = w * 0.3  # Increase size by 30% of the cell width
 
     if start_cell:
         x = start_cell.i * w + x_offset
         y = start_cell.j * w + y_offset
-        canvas.create_oval(x + 5, y + 5, x + w - 5, y + w - 5, fill="green")
+        canvas.create_rectangle(
+            x - extra_size / 2, y - extra_size / 2,
+            x + w + extra_size / 2, y + w + extra_size / 2,
+            fill="green", outline="green"
+        )
 
     if end_cell:
         x = end_cell.i * w + x_offset
         y = end_cell.j * w + y_offset
-        canvas.create_oval(x + 5, y + 5, x + w - 5, y + w - 5, fill="red")
+        canvas.create_rectangle(
+            x - extra_size / 2, y - extra_size / 2,
+            x + w + extra_size / 2, y + w + extra_size / 2,
+            fill="red", outline="red"
+        )
+
+    canvas.update()
 
 
-# Create Tkinter window
+
 root = tk.Tk()
 root.title("Maze Generator")
 
@@ -234,6 +210,9 @@ image_button.pack(side=tk.LEFT)
 
 generate_button = tk.Button(top_frame, text="Generate Maze", command=generate_maze, state=tk.DISABLED)
 generate_button.pack(side=tk.LEFT)
+
+solve_button = tk.Button(top_frame, text="Solve Maze", command=solve_maze_bfs, state=tk.DISABLED)
+solve_button.pack(side=tk.LEFT)
 
 canvas = tk.Canvas(root, width=width, height=height)
 canvas.pack()
