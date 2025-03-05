@@ -523,7 +523,7 @@ def solve_maze_selected():
         solve_maze_dfs()  # Calls DFS
 
 
-# Function to reset the maze
+# Function to clear the maze
 def clear_maze():
     global cols, rows, grid, stack, current, start, goal
     cols, rows = 0, 0
@@ -534,7 +534,7 @@ def clear_maze():
     execution_time_label.config(text="Execution Time: 0s")  # clear execution time label
     size_entry.delete(0, tk.END)  # Clear the maze size input
 
-
+# Function to reset the maze
 def reset_maze():
     """Resets the maze while keeping the current size."""
     try:
