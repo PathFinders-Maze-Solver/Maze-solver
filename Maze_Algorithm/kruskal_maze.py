@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 from a_star import solve_maze_a_star
 from bfs import solve_maze_bfs
 from dfs import solve_maze_dfs
+from dijkstra import solve_maze_dijkstra
 
 pygame.init()
 
@@ -34,6 +35,10 @@ def generate_maze():
 
     cols = rows = size
     w = width // cols
+
+    # if width % cols ==0:
+    #    w-=2
+    
     grid.clear()
     stack.clear()
 
@@ -250,7 +255,6 @@ def generate_maze():
 
     step()
 
-
 def update_gui(path, solving, surface):
     surface.fill((255, 255, 255))  # Clear the surface
     for cell in grid:
@@ -298,12 +302,12 @@ def solve_maze_selected():
         solve_maze_bfs(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
     elif algorithm_var.get() == "A*":
         solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
-    else:
+    elif algorithm_var.get() == "DFS":
         solve_maze_dfs(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
+    elif algorithm_var.get() == "Dijkstra":
+        solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, root, width, height,w,x_offset,y_offset)
 
-
-
-
+# Function to reset the maze
 def reset_maze():
     """Resets the maze while keeping the current size."""
     try:
@@ -326,7 +330,6 @@ def clear_maze():
     canvas.delete("all")  # Clear the canvas
     execution_time_label.config(text="Execution Time: 0s")  # clear execution time label
     size_entry.delete(0, tk.END)  # Clear the maze size input
-
 
 
 # create tkinter window
@@ -378,6 +381,9 @@ dfs_radio.pack(side=tk.RIGHT, padx=5)
 
 bfs_radio = tk.Radiobutton(algo_frame, text="BFS", variable=algorithm_var, value="BFS", bg="#d3d3d3")
 bfs_radio.pack(side=tk.RIGHT, padx=5)
+
+dijkstra_radio = tk.Radiobutton(algo_frame, text="Dijkstra", variable=algorithm_var, value="Dijkstra", bg="#d3d3d3")
+dijkstra_radio.pack(side=tk.RIGHT, padx=5)
 
 # Algorithm selection
 algo_label = tk.Label(top_frame, text="Algorithm:", bg="#d3d3d3")
