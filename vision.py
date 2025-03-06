@@ -36,6 +36,7 @@ def index(i, j):
         return None
     return i + j * cols
 
+
 def generate_maze():
     """Generate a maze from an input image, removing outer padding."""
     global cols, rows, grid, w, x_offset, y_offset, walls, start, goal
@@ -97,6 +98,7 @@ def generate_maze():
     draw_maze()
     generate_button.config(state=tk.DISABLED)
 
+
 def find_border_openings():
     """Detect all open cells on the maze border."""
     openings = []
@@ -149,56 +151,42 @@ def bfs(start_cell):
     return farthest_cell
 
 def find_start_end_points():
-    """Ensure start and end points are selected strictly from outer wall openings and placed in the middle of the opening area."""
+    """Ensure start and end points take the width of one full cell."""
     global start, goal
 
-    openings = find_border_openings()
+    def find_valid_openings(edge_cells):
+        """Find continuous openings at least one cell wide."""
+        valid_openings = []
+        temp_opening = []
 
-    if len(openings) < 2:
-        messagebox.showerror("Error", "Not enough border openings to set start and end points!")
-        return
+        for i, j in edge_cells:
+            if not grid[index(i, j)].is_wall:
+                temp_opening.append((i, j))
+            else:
+                if len(temp_opening) >= w:  # Ensure it's at least 1 cell wide
+                    valid_openings.append(temp_opening)
+                temp_opening = []
 
-    # Function to find the middle cell of an opening area
-    def find_middle_cell(opening_cells):
-        if not opening_cells:
-            return None
-        # Group cells by row or column based on the border
-        if opening_cells[0][1] == 0 or opening_cells[0][1] == rows - 1:  # Top or bottom border
-            # Group by column and find the middle row
-            col = opening_cells[0][0]
-            rows_in_opening = [cell[1] for cell in opening_cells if cell[0] == col]
-            middle_row = rows_in_opening[len(rows_in_opening) // 2]
-            return (col, middle_row)
-        else:  # Left or right border
-            # Group by row and find the middle column
-            row = opening_cells[0][1]
-            cols_in_opening = [cell[0] for cell in opening_cells if cell[1] == row]
-            middle_col = cols_in_opening[len(cols_in_opening) // 2]
-            return (middle_col, row)
+        if len(temp_opening) >= w:
+            valid_openings.append(temp_opening)
 
-    # Randomly select a start position from the detected outer wall openings
-    start_pos = random.choice(openings)
-    start_cells = [cell for cell in openings if cell[0] == start_pos[0] or cell[1] == start_pos[1]]
-    start_middle = find_middle_cell(start_cells)
-    if start_middle:
-        start = grid[index(start_middle[0], start_middle[1])]
+        return valid_openings
 
-    # Use BFS to find the farthest outer border opening from the start
-    farthest_cell = bfs(start)
+    # Find valid openings at least one cell wide
+    top_openings = find_valid_openings([(i, 0) for i in range(cols)])
+    bottom_openings = find_valid_openings([(i, rows - 1) for i in range(cols)])
+    left_openings = find_valid_openings([(0, j) for j in range(rows)])
+    right_openings = find_valid_openings([(cols - 1, j) for j in range(rows)])
 
-    # Find the farthest valid border opening (ensuring it is an exit)
-    valid_endings = [grid[index(x, y)] for x, y in openings if (x, y) != (start.i, start.j)]
-    if valid_endings:
-        # Choose the one farthest from the start
-        goal_cell = max(valid_endings, key=lambda cell: abs(cell.i - start.i) + abs(cell.j - start.j))
-        goal_cells = [cell for cell in openings if cell[0] == goal_cell.i or cell[1] == goal_cell.j]
-        goal_middle = find_middle_cell(goal_cells)
-        if goal_middle:
-            goal = grid[index(goal_middle[0], goal_middle[1])]
-    else:
-        goal = farthest_cell  # Fallback (should not happen if maze has at least 2 openings)
+    # Choose the central cell of the widest opening
+    start_opening = top_openings[0] if top_openings else (left_openings[0] if left_openings else [])
+    end_opening = bottom_openings[0] if bottom_openings else (right_openings[0] if right_openings else [])
 
-    print(f"Start: ({start.i}, {start.j}) (Green), End: ({goal.i}, {goal.j}) (Red)")
+    start = grid[index(*start_opening[len(start_opening) // 2])] if start_opening else None
+    goal = grid[index(*end_opening[len(end_opening) // 2])] if end_opening else None
+
+    if not start or not goal:
+        messagebox.showerror("Error", "Could not find valid start or end points!")
 
 def detect_outer_walls():
     """Detect open cells on outer walls."""
@@ -225,19 +213,32 @@ def draw_maze():
     for cell in grid:
         x = cell.i * w + x_offset
         y = cell.j * w + y_offset
-
         color = "black" if cell.is_wall else "white"
         canvas.create_rectangle(x, y, x + w, y + w, fill=color, outline=color)
+
+    # Increase the size of start and end cells
+    extra_size = w * 15  # Increase size by 30% of the cell width
 
     if start:
         x = start.i * w + x_offset
         y = start.j * w + y_offset
-        canvas.create_oval(x + 5, y + 5, x + w - 5, y + w - 5, fill="green")
+        canvas.create_rectangle(
+            x - extra_size / 2, y - extra_size / 2,
+            x + w + extra_size / 2, y + w + extra_size / 2,
+            fill="green", outline="green"
+        )
 
     if goal:
         x = goal.i * w + x_offset
         y = goal.j * w + y_offset
-        canvas.create_oval(x + 5, y + 5, x + w - 5, y + w - 5, fill="red")
+        canvas.create_rectangle(
+            x - extra_size / 2, y - extra_size / 2,
+            x + w + extra_size / 2, y + w + extra_size / 2,
+            fill="red", outline="red"
+        )
+        
+    canvas.update()
+
 
 def get_neighbors(cell):
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -255,13 +256,17 @@ def reconstruct_path(came_from, current):
     while current in came_from:
         path.append(current)
         current = came_from[current]
-    path.reverse()
+    path.append(current)  # Add the start point
+    path.reverse()  # Reverse to get the path from start to goal
     return path
 
 def draw_path(path):
+    """Draw the final path on the canvas."""
     for i in range(len(path) - 1):
-        x1, y1 = path[i].i * w + x_offset + w // 2, path[i].j * w + y_offset + w // 2
-        x2, y2 = path[i + 1].i * w + x_offset + w // 2, path[i + 1].j * w + y_offset + w // 2
+        x1 = path[i].i * w + x_offset + w // 2
+        y1 = path[i].j * w + y_offset + w // 2
+        x2 = path[i + 1].i * w + x_offset + w // 2
+        y2 = path[i + 1].j * w + y_offset + w // 2
         canvas.create_line(x1, y1, x2, y2, fill="blue", width=2)
 
 def solve_maze_bfs():
@@ -287,16 +292,14 @@ def solve_maze_bfs():
 
 def solve_maze_dfs():
     start_time = time.time()
-    stack = [start]  # Stack stores cells to explore
-    came_from = {}  # Dictionary to store the parent of each cell
+    stack = [(start, [start])]  # Stack stores tuples of (current cell, current path)
     visited = set()  # Set to keep track of visited cells
     visited.add(start)
 
     while stack:
-        current = stack.pop()  # Get the last cell from the stack
+        current, path = stack.pop()  # Get the last cell and its path from the stack
         if current == goal:
-            # Reconstruct and draw the path
-            path = reconstruct_path(came_from, goal)
+            # Draw the final path and update execution time
             draw_path(path)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return  # Stop once the goal is found
@@ -305,8 +308,7 @@ def solve_maze_dfs():
         for neighbor in get_neighbors(current):
             if neighbor not in visited:
                 visited.add(neighbor)
-                came_from[neighbor] = current  # Record the parent of the neighbor
-                stack.append(neighbor)  # Add the neighbor to the stack
+                stack.append((neighbor, path + [neighbor]))  # Add the neighbor and the updated path to the stack
                 
 def solve_maze_astar():
     start_time = time.time()
