@@ -306,18 +306,24 @@ def solve_maze_selected():
 
 
 
-
 def reset_maze():
-    """Resets the maze while keeping the current size."""
-    try:
-        size = int(size_entry.get())  # Get the same size
-        if size <= 0:
-            raise ValueError
-    except ValueError:
-        messagebox.showerror("Invalid Input", "Please enter a valid maze size before resetting.")
-        return
+    # Create a new surface and fill with white (clearing any previous drawings)
+    surface = pygame.Surface((width, height))
+    surface.fill((255, 255, 255))
 
-    generate_maze()  # Regenerate the maze with the same size
+    # Redraw every cell (without any solution path)
+    for cell in grid:
+        cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
+
+    # Update the canvas with the redrawn maze
+    img_data = pygame.image.tostring(surface, "RGB")
+    img = Image.frombytes("RGB", (width, height), img_data)
+    img_tk = ImageTk.PhotoImage(img)
+    canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+    canvas.img = img_tk  # Keep a reference
+
+    # Optionally, reset the execution time label
+    execution_time_label.config(text="Execution Time: 0s")
 
 # Function to clear the maze
 def clear_maze():
