@@ -6,6 +6,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 
 from a_star import solve_maze_a_star
+from dijkstra import solve_maze_dijkstra
 from bfs import solve_maze_bfs
 from dfs import solve_maze_dfs
 
@@ -298,8 +299,10 @@ def solve_maze_selected():
         solve_maze_bfs(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
     elif algorithm_var.get() == "A*":
         solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
-    else:
+    elif algorithm_var.get() == "DFS":
         solve_maze_dfs(start, goal, grid, index, update_gui, canvas, execution_time_label, root, width, height)
+    elif algorithm_var.get() == "Dijkstra":
+        solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, root, width, height,w,x_offset,y_offset)
 
 
 
@@ -378,6 +381,9 @@ dfs_radio.pack(side=tk.RIGHT, padx=5)
 
 bfs_radio = tk.Radiobutton(algo_frame, text="BFS", variable=algorithm_var, value="BFS", bg="#d3d3d3")
 bfs_radio.pack(side=tk.RIGHT, padx=5)
+
+dijkstra_radio = tk.Radiobutton(algo_frame, text="Dijkstra", variable=algorithm_var, value="Dijkstra", bg="#d3d3d3")
+dijkstra_radio.pack(side=tk.RIGHT, padx=5)
 
 # Algorithm selection
 algo_label = tk.Label(top_frame, text="Algorithm:", bg="#d3d3d3")
