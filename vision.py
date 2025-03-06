@@ -302,14 +302,28 @@ def reconstruct_path(came_from, current):
     path.reverse()  # Reverse to get the path from start to goal
     return path
 
-def draw_path(path):
-    """Draw the final path on the canvas."""
-    for i in range(len(path) - 1):
-        x1 = path[i].i * w + x_offset + w // 2
-        y1 = path[i].j * w + y_offset + w // 2
-        x2 = path[i + 1].i * w + x_offset + w // 2
-        y2 = path[i + 1].j * w + y_offset + w // 2
-        canvas.create_line(x1, y1, x2, y2, fill="blue", width=2)
+
+def draw_solution(path, solving):
+    """
+    Draw the solution path one step at a time to show real-time steps.
+
+    :param path: List of cells in the solution path.
+    :param solving: If True, draw the solution path in blue. If False, reset the cells to white.
+    """
+    def draw_step(i):
+        if i < len(path):
+            cell = path[i]
+            x = cell.i * w + x_offset
+            y = cell.j * w + y_offset
+            color = "blue" if solving else "white"  # Blue for solving, white for resetting
+            canvas.create_rectangle(x, y, x + w, y + w, fill=color, outline=color)
+            root.update()  # Update the canvas to show the current step
+
+            # Schedule the next step
+            root.after(1, draw_step, i + 1)  # Adjust 100ms for desired speed
+
+    draw_step(0)  # Start drawing from the first step of the path
+
 
 def solve_maze_bfs():
     start_time = time.time()
@@ -322,7 +336,7 @@ def solve_maze_bfs():
         current = queue.popleft()
         if current == goal:
             path = reconstruct_path(came_from, goal)
-            draw_path(path)
+            draw_solution(path, solving=True)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return
         
@@ -332,7 +346,9 @@ def solve_maze_bfs():
                 came_from[neighbor] = current
                 queue.append(neighbor)
 
+
 def solve_maze_dfs():
+    """Solve the maze using DFS and draw the solution path after completion."""
     start_time = time.time()
     stack = [(start, [start])]  # Stack stores tuples of (current cell, current path)
     visited = set()  # Set to keep track of visited cells
@@ -341,8 +357,8 @@ def solve_maze_dfs():
     while stack:
         current, path = stack.pop()  # Get the last cell and its path from the stack
         if current == goal:
-            # Draw the final path and update execution time
-            draw_path(path)
+            # Once the goal is reached, draw the entire solution path
+            draw_solution(path, solving=True)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return  # Stop once the goal is found
 
@@ -351,6 +367,11 @@ def solve_maze_dfs():
             if neighbor not in visited:
                 visited.add(neighbor)
                 stack.append((neighbor, path + [neighbor]))  # Add the neighbor and the updated path to the stack
+
+    # If no path is found, indicate failure (optional)
+    print("No path found.")
+    execution_time_label.config(text="Execution Time: No path found")
+
                 
 def solve_maze_astar():
     """Solve the maze using A* algorithm."""
@@ -366,7 +387,7 @@ def solve_maze_astar():
         _, current = heapq.heappop(open_set)
         if current == goal:
             path = reconstruct_path(came_from, goal)
-            draw_path(path)
+            draw_solution(path, solving=True)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return
 
