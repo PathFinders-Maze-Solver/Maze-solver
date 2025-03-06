@@ -36,6 +36,22 @@ def index(i, j):
         return None
     return i + j * cols
 
+# Find the number of pixels in the entrance and exit openings
+def find_opening_width(binary, axis=0):
+    """Finds the width of an opening along a given axis (0 = vertical, 1 = horizontal)."""
+    if axis == 0:  # Vertical opening (left or right side of the maze)
+        for col in range(binary.shape[1]):  # Scan columns from left
+            column = binary[:, col]
+            white_pixels = np.sum(column == 255)
+            if white_pixels > 0:  # Found an opening
+                return white_pixels
+    elif axis == 1:  # Horizontal opening (top or bottom)
+        for row in range(binary.shape[0]):  # Scan rows from top
+            row_pixels = binary[row, :]
+            white_pixels = np.sum(row_pixels == 255)
+            if white_pixels > 0:
+                return white_pixels
+    return 0  # No opening found
 
 def generate_maze():
     """Generate a maze from an input image, removing outer padding."""
@@ -70,6 +86,12 @@ def generate_maze():
     grid.clear()
     walls.clear()
 
+    vertical_opening = find_opening_width(cropped_binary, axis=0)  # Check left/right openings
+    horizontal_opening = find_opening_width(cropped_binary, axis=1)  # Check top/bottom openings
+
+    print(f"Vertical Opening Width: {vertical_opening} pixels")
+    print(f"Horizontal Opening Width: {horizontal_opening} pixels")
+
     class Cell:
         def __init__(self, i, j, is_wall):
             self.i, self.j = i, j
@@ -77,6 +99,10 @@ def generate_maze():
             self.walls = [True, True, True, True]
             self.parent = self
             self.rank = 0
+        
+        def __lt__(self, other):
+            # Compare cells based on their coordinates (or any unique identifier)
+             return (self.i, self.j) < (other.i, other.j)
 
     for j in range(rows):
         for i in range(cols):
@@ -98,6 +124,22 @@ def generate_maze():
     draw_maze()
     generate_button.config(state=tk.DISABLED)
 
+# Find the number of pixels in the entrance and exit openings
+def find_opening_width(binary, axis=0):
+    """Finds the width of an opening along a given axis (0 = vertical, 1 = horizontal)."""
+    if axis == 0:  # Vertical opening (left or right side of the maze)
+        for col in range(binary.shape[1]):  # Scan columns from left
+            column = binary[:, col]
+            white_pixels = np.sum(column == 255)
+            if white_pixels > 0:  # Found an opening
+                return white_pixels
+    elif axis == 1:  # Horizontal opening (top or bottom)
+        for row in range(binary.shape[0]):  # Scan rows from top
+            row_pixels = binary[row, :]
+            white_pixels = np.sum(row_pixels == 255)
+            if white_pixels > 0:
+                return white_pixels
+    return 0  # No opening found
 
 def find_border_openings():
     """Detect all open cells on the maze border."""
@@ -311,14 +353,15 @@ def solve_maze_dfs():
                 stack.append((neighbor, path + [neighbor]))  # Add the neighbor and the updated path to the stack
                 
 def solve_maze_astar():
+    """Solve the maze using A* algorithm."""
     start_time = time.time()
-    open_set = [(0, start)]
+    open_set = [(0, start)]  # Priority queue of (f_score, cell)
     came_from = {}
     g_score = {cell: float('inf') for cell in grid}
     g_score[start] = 0
     f_score = {cell: float('inf') for cell in grid}
     f_score[start] = abs(start.i - goal.i) + abs(start.j - goal.j)
-    
+
     while open_set:
         _, current = heapq.heappop(open_set)
         if current == goal:
@@ -326,7 +369,7 @@ def solve_maze_astar():
             draw_path(path)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return
-        
+
         for neighbor in get_neighbors(current):
             tentative_g_score = g_score[current] + 1
             if tentative_g_score < g_score[neighbor]:
@@ -334,7 +377,7 @@ def solve_maze_astar():
                 g_score[neighbor] = tentative_g_score
                 f_score[neighbor] = g_score[neighbor] + abs(neighbor.i - goal.i) + abs(neighbor.j - goal.j)
                 heapq.heappush(open_set, (f_score[neighbor], neighbor))
-
+                
 def solve_maze_selected():
     # Clear previous path
     draw_maze()
@@ -357,6 +400,7 @@ image_button.pack(side=tk.LEFT)
 
 generate_button = tk.Button(top_frame, text="Generate Maze", command=generate_maze, state=tk.DISABLED)
 generate_button.pack(side=tk.LEFT)
+
 
 # create time label
 execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
