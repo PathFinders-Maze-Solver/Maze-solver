@@ -26,6 +26,11 @@ def solve_maze_bfs(start, goal, grid, index, update_gui, canvas, execution_time_
         if current == goal:
             solving = False  # Mark as solved, so we clear the blue lines
 
+            # Calculate and update execution time
+            end_time = time.time()
+            execution_time = round(end_time - start_time, 2)
+            execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
         # Update the GUI at each step
         update_gui(path, solving, surface)
 
@@ -41,10 +46,7 @@ def solve_maze_bfs(start, goal, grid, index, update_gui, canvas, execution_time_
                     new_path = path + [current]
                     queue.append((neighbor, new_path))
 
-        # Calculate and update execution time
-        end_time = time.time()
-        execution_time = round(end_time - start_time, 2)
-        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
 
         # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")

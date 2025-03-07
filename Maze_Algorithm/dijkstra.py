@@ -2,12 +2,10 @@ import heapq
 import time
 import pygame
 import tkinter as tk
-from collections import deque
 from tkinter import messagebox
 from PIL import Image, ImageTk
 
-
-def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, root, width, height,w,x_offset,y_offset):
+def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, root, width, height, w, x_offset, y_offset):
     visited = set()
     came_from = {}
     g_score = {cell: float('inf') for cell in grid}
@@ -40,15 +38,32 @@ def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, 
         # Get the node with the lowest cost
         _, current = heapq.heappop(open_set)
 
+        # Explore neighbors and update cost
+        for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
+            ni, nj = current.i + di, current.j + dj
+            neighbor_idx = index(ni, nj)
+            if neighbor_idx is not None:
+                neighbor = grid[neighbor_idx]
+                if not current.walls[direction]:
+                    tentative_g_score = g_score[current] + 1  # Uniform cost for every move
+                    if tentative_g_score < g_score[neighbor]:
+                        came_from[neighbor] = current
+                        g_score[neighbor] = tentative_g_score
+                        heapq.heappush(open_set, (g_score[neighbor], neighbor))
+
+        # If goal reached, clear any blue lines and show only the final red path
         if current == goal:
-            # Path found, draw the shortest path in red
+            surface.fill((255, 255, 255))
+            for cell in grid:
+                cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
             final_path = reconstruct_path(came_from, current)
             for i in range(len(final_path) - 1):
-                x1, y1 = final_path[i].i * w + x_offset + w // 2, final_path[i].j * w + y_offset + w // 2
-                x2, y2 = final_path[i + 1].i * w + x_offset + w // 2, final_path[i + 1].j * w + y_offset + w // 2
+                x1 = final_path[i].i * w + x_offset + w // 2
+                y1 = final_path[i].j * w + y_offset + w // 2
+                x2 = final_path[i + 1].i * w + x_offset + w // 2
+                y2 = final_path[i + 1].j * w + y_offset + w // 2
                 pygame.draw.line(surface, (255, 0, 0), (x1, y1), (x2, y2), 3)  # Red for final path
 
-            # Update canvas with the final path
             img_data = pygame.image.tostring(surface, "RGB")
             img = Image.frombytes("RGB", (width, height), img_data)
             img_tk = ImageTk.PhotoImage(img)
@@ -63,25 +78,13 @@ def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, 
         for cell in grid:
             cell.show(surface, is_start=(cell == start), is_goal=(cell == goal))
 
-        # Explore neighbors and update cost
-        for direction, (di, dj) in enumerate([(0, -1), (1, 0), (0, 1), (-1, 0)]):
-            ni, nj = current.i + di, current.j + dj
-            neighbor_idx = index(ni, nj)
-
-            if neighbor_idx is not None:
-                neighbor = grid[neighbor_idx]
-                if neighbor not in visited and not current.walls[direction]:
-                    tentative_g_score = g_score[current] + 1  # Uniform cost for every move
-                    if tentative_g_score < g_score[neighbor]:
-                        came_from[neighbor] = current
-                        g_score[neighbor] = tentative_g_score
-                        heapq.heappush(open_set, (g_score[neighbor], neighbor))
-
-        # Draw the solving progress in blue
+        # Draw the current search progress in blue
         path = reconstruct_path(came_from, current)
         for i in range(len(path) - 1):
-            x1, y1 = path[i].i * w + x_offset + w // 2, path[i].j * w + y_offset + w // 2
-            x2, y2 = path[i + 1].i * w + x_offset + w // 2, path[i + 1].j * w + y_offset + w // 2
+            x1 = path[i].i * w + x_offset + w // 2
+            y1 = path[i].j * w + y_offset + w // 2
+            x2 = path[i + 1].i * w + x_offset + w // 2
+            y2 = path[i + 1].j * w + y_offset + w // 2
             pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for search path
 
         # Update execution time
