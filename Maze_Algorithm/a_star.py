@@ -35,6 +35,11 @@ def solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_ti
         if current == goal:
             solving = False  # Mark as solved, so we clear the blue lines
 
+            # Calculate and update execution time
+            end_time = time.time()
+            execution_time = round(end_time - start_time, 2)
+            execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
         # Update the GUI at each step
         update_gui(path, solving, surface)
 
@@ -55,10 +60,7 @@ def solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_ti
                         f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
                         heapq.heappush(open_list, (f_score[neighbor], neighbor, path + [current]))
 
-        # Calculate and update execution time
-        end_time = time.time()
-        execution_time = round(end_time - start_time, 2)
-        execution_time_label.config(text=f"Execution Time: {execution_time}s")
+
 
         # Update the canvas at each step
         img_data = pygame.image.tostring(surface, "RGB")
