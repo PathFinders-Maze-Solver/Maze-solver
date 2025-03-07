@@ -36,23 +36,6 @@ def index(i, j):
         return None
     return i + j * cols
 
-# Find the number of pixels in the entrance and exit openings
-def find_opening_width(binary, axis=0):
-    """Finds the width of an opening along a given axis (0 = vertical, 1 = horizontal)."""
-    if axis == 0:  # Vertical opening (left or right side of the maze)
-        for col in range(binary.shape[1]):  # Scan columns from left
-            column = binary[:, col]
-            white_pixels = np.sum(column == 255)
-            if white_pixels > 0:  # Found an opening
-                return white_pixels
-    elif axis == 1:  # Horizontal opening (top or bottom)
-        for row in range(binary.shape[0]):  # Scan rows from top
-            row_pixels = binary[row, :]
-            white_pixels = np.sum(row_pixels == 255)
-            if white_pixels > 0:
-                return white_pixels
-    return 0  # No opening found
-
 def generate_maze():
     """Generate a maze from an input image, removing outer padding."""
     global cols, rows, grid, w, x_offset, y_offset, walls, start, goal
@@ -79,7 +62,11 @@ def generate_maze():
 
     rows, cols = cropped_binary.shape
     w = min(width // cols, height // rows)
+    print(w)
+    print(rows)
+    print(cols)
 
+    
     x_offset = (width - cols * w) // 2
     y_offset = (height - rows * w) // 2
 
@@ -103,11 +90,13 @@ def generate_maze():
         def __lt__(self, other):
             # Compare cells based on their coordinates (or any unique identifier)
              return (self.i, self.j) < (other.i, other.j)
-
+    
     for j in range(rows):
         for i in range(cols):
             is_wall = cropped_binary[j, i] == 0
             grid.append(Cell(i, j, is_wall))
+            i+=min(vertical_opening,horizontal_opening)
+        j+=min(vertical_opening,horizontal_opening)
 
     # Generate walls between cells
     for j in range(rows):
@@ -118,6 +107,8 @@ def generate_maze():
                     walls.append((cell, grid[index(i + 1, j)], 1))
                 if j < rows - 1 and not grid[index(i, j + 1)].is_wall:
                     walls.append((cell, grid[index(i, j + 1)], 2))
+            i+=min(vertical_opening,horizontal_opening)
+        j+=min(vertical_opening,horizontal_opening)
 
     random.shuffle(walls)
     find_start_end_points()
@@ -281,7 +272,6 @@ def draw_maze():
         
     canvas.update()
 
-
 def get_neighbors(cell):
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     neighbors = []
@@ -302,27 +292,179 @@ def reconstruct_path(came_from, current):
     path.reverse()  # Reverse to get the path from start to goal
     return path
 
+# def draw_path(path):
+#     """Draw the final path on the canvas with a 5-pixel gap from walls."""
+#     for i in range(len(path) - 1):
+#         # Calculate the center of the current cell with a 5-pixel gap from walls
+#         x1 = path[i].i * w + x_offset
+#         y1 = path[i].j * w + y_offset 
+#         x2 = path[i + 1].i * w + x_offset + w 
+#         y2 = path[i + 1].j * w + y_offset + w 
 
-def draw_solution(path, solving):
-    """
-    Draw the solution path one step at a time to show real-time steps.
+        
+#         # Draw the line between the adjusted points
+#         canvas.create_line(x1, y1, x2, y2, fill="blue", width=1)
 
-    :param path: List of cells in the solution path.
-    :param solving: If True, draw the solution path in blue. If False, reset the cells to white.
-    """
+class Cell:
+    def __init__(self, i, j, is_wall):
+        self.i = i  # Column index of the cell
+        self.j = j  # Row index of the cell
+        self.is_wall = is_wall  # Whether the cell is a wall (True/False)
+        self.walls = [True, True, True, True]  # Walls (top, right, bottom, left)
+        self.parent = self  # Parent cell for union-find operations
+        self.rank = 0  # Rank for union-find operations
+
+    def __lt__(self, other):
+        # Compare cells based on their coordinates (or any unique identifier)
+        return (self.i, self.j) < (other.i, other.j)
+    
+#-------------------------------- correctly shift only in 2 directions -----------------------------------------    
+def draw_path_2direc(path):
+    """Draw the final path on the canvas with a 5-pixel gap from walls."""
+    if not path:
+        return  # No path to draw
+
+    # Determine the shift for the first cell
+    first_cell = path[0]
+    shift_x, shift_y = 0, 0  # Initialize shift values
+
+    # Check neighbors of the first cell to determine the shift
+    neighbors = [
+        (first_cell.i - 1, first_cell.j),  # Up
+        (first_cell.i + 1, first_cell.j),  # Down
+        (first_cell.i, first_cell.j - 1),  # Left
+        (first_cell.i, first_cell.j + 1)   # Right
+    ]
+
+    for neighbor in neighbors:
+        ni, nj = neighbor
+        if 0 <= ni < cols and 0 <= nj < rows:
+            neighbor_cell = grid[index(ni, nj)]
+            if neighbor_cell.is_wall:
+                if neighbor == (first_cell.i - 1, first_cell.j):  # Up neighbor is a wall
+                    shift_y += 100  # Shift down by 1 pixel
+                elif neighbor == (first_cell.i + 1, first_cell.j):  # Down neighbor is a wall
+                    shift_y -= 100  # Shift up by 1 pixel
+                elif neighbor == (first_cell.i, first_cell.j - 1):  # Left neighbor is a wall
+                    shift_x += 100  # Shift right by 1 pixel
+                elif neighbor == (first_cell.i, first_cell.j + 1):  # Right neighbor is a wall
+                    shift_x -= 100  # Shift left by 1 pixel
+
+    # Apply the same shift to all cells in the path
+    adjusted_path = []
+    for cell in path:
+        adjusted_cell = Cell(cell.i + shift_x, cell.j + shift_y, cell.is_wall)
+        adjusted_path.append(adjusted_cell)
+
+    # Draw the adjusted path
+    for i in range(len(adjusted_path) - 1):
+        # Calculate the adjusted coordinates for the current and next point
+        x1 = adjusted_path[i].i * w + x_offset + w // 2  # Center of the current cell
+        y1 = adjusted_path[i].j * w + y_offset + w // 2
+        x2 = adjusted_path[i + 1].i * w + x_offset + w // 2  # Center of the next cell
+        y2 = adjusted_path[i + 1].j * w + y_offset + w // 2
+
+        # Draw the line between the adjusted points
+        canvas.create_line(x1, y1, x2, y2, fill="blue", width=1)
+
+#-------------------------------- using 4 neighborhood -----------------------------------------
+def draw_path_4neighbour(path):
+    """Draw the final path on the canvas, centered in the walkable area."""
+    if not path:
+        return  # No path to draw
+
+    # Adjust each cell in the path to the center of the walkable area
+    adjusted_path = []
+    for cell in path:
+        # Initialize variables to calculate the center
+        total_i, total_j, count = 0, 0, 0
+
+        # Check all 4 neighbors of the current cell
+        neighbors = [
+            (cell.i - 1, cell.j),  # Up
+            (cell.i + 1, cell.j),  # Down
+            (cell.i, cell.j - 1),  # Left
+            (cell.i, cell.j + 1)   # Right
+        ]
+
+        for neighbor in neighbors:
+            ni, nj = neighbor
+            if 0 <= ni < cols and 0 <= nj < rows:
+                neighbor_cell = grid[index(ni, nj)]
+                if not neighbor_cell.is_wall:
+                    total_i += ni
+                    total_j += nj
+                    count += 1
+
+        # Calculate the center of the walkable area
+        if count > 0:
+            center_i = total_i / count
+            center_j = total_j / count
+        else:
+            # If no walkable neighbors, use the current cell's position
+            center_i = cell.i
+            center_j = cell.j
+
+        # Create a new cell at the center of the walkable area
+        adjusted_cell = Cell(int(center_i), int(center_j), cell.is_wall)
+        adjusted_path.append(adjusted_cell)
+
+    # Draw the adjusted path
+    for i in range(len(adjusted_path) - 1):
+        # Calculate the adjusted coordinates for the current and next point
+        x1 = adjusted_path[i].i * w + x_offset + w // 2  # Center of the current cell
+        y1 = adjusted_path[i].j * w + y_offset + w // 2
+        x2 = adjusted_path[i + 1].i * w + x_offset + w // 2  # Center of the next cell
+        y2 = adjusted_path[i + 1].j * w + y_offset + w // 2
+
+        # Draw the line between the adjusted points
+        canvas.create_line(x1, y1, x2, y2, fill="blue", width=0.5)
+
+
+#-------------------------------- using 3x3 neighborhood -----------------------------------------
+def draw_path(path):
+    """Draw the final path on the canvas, slightly moved away from edges."""
+    if not path:
+        return  # No path to draw
+
+    adjusted_path = []
+    for cell in path:
+        total_i, total_j, count = 0, 0, 0
+
+        # Check a 3x3 neighborhood to find open space
+        for di in range(-1, 2):  # -1, 0, 1
+            for dj in range(-1, 2):  # -1, 0, 1
+                ni, nj = cell.i + di, cell.j + dj
+                if 0 <= ni < cols and 0 <= nj < rows:
+                    neighbor_cell = grid[index(ni, nj)]
+                    if not neighbor_cell.is_wall:
+                        total_i += ni
+                        total_j += nj
+                        count += 1
+
+        # Calculate a smooth shift towards the center
+        if count > 0:
+            center_i = (total_i / count) * 0.7 + cell.i * 0.3
+            center_j = (total_j / count) * 0.7 + cell.j * 0.3
+        else:
+            center_i, center_j = cell.i, cell.j  # Keep original if no open space
+
+        adjusted_cell = Cell(int(center_i), int(center_j), cell.is_wall)
+        adjusted_path.append(adjusted_cell)
+
     def draw_step(i):
-        if i < len(path):
-            cell = path[i]
-            x = cell.i * w + x_offset
-            y = cell.j * w + y_offset
-            color = "blue" if solving else "white"  # Blue for solving, white for resetting
-            canvas.create_rectangle(x, y, x + w, y + w, fill=color, outline=color)
-            root.update()  # Update the canvas to show the current step
+        """Draw the path step by step in real-time with a smooth offset."""
+        if i < len(adjusted_path) - 1:
+            x1 = adjusted_path[i].i * w + x_offset + w * 0.6  # Slightly offset
+            y1 = adjusted_path[i].j * w + y_offset + w * 0.6
+            x2 = adjusted_path[i + 1].i * w + x_offset + w * 0.6
+            y2 = adjusted_path[i + 1].j * w + y_offset + w * 0.6
 
-            # Schedule the next step
-            root.after(1, draw_step, i + 1)  # Adjust 100ms for desired speed
+            canvas.create_line(x1, y1, x2, y2, fill="blue", width=3)
+            root.update()
+            root.after(1, draw_step, i + 1)  # Adjust speed if needed
 
-    draw_step(0)  # Start drawing from the first step of the path
+    draw_step(0)  # Start animation
 
 
 def solve_maze_bfs():
@@ -336,7 +478,7 @@ def solve_maze_bfs():
         current = queue.popleft()
         if current == goal:
             path = reconstruct_path(came_from, goal)
-            draw_solution(path, solving=True)
+            draw_path(path)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return
         
@@ -346,9 +488,7 @@ def solve_maze_bfs():
                 came_from[neighbor] = current
                 queue.append(neighbor)
 
-
 def solve_maze_dfs():
-    """Solve the maze using DFS and draw the solution path after completion."""
     start_time = time.time()
     stack = [(start, [start])]  # Stack stores tuples of (current cell, current path)
     visited = set()  # Set to keep track of visited cells
@@ -357,8 +497,8 @@ def solve_maze_dfs():
     while stack:
         current, path = stack.pop()  # Get the last cell and its path from the stack
         if current == goal:
-            # Once the goal is reached, draw the entire solution path
-            draw_solution(path, solving=True)
+            # Draw the final path and update execution time
+            draw_path(path)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return  # Stop once the goal is found
 
@@ -367,11 +507,6 @@ def solve_maze_dfs():
             if neighbor not in visited:
                 visited.add(neighbor)
                 stack.append((neighbor, path + [neighbor]))  # Add the neighbor and the updated path to the stack
-
-    # If no path is found, indicate failure (optional)
-    print("No path found.")
-    execution_time_label.config(text="Execution Time: No path found")
-
                 
 def solve_maze_astar():
     """Solve the maze using A* algorithm."""
@@ -387,7 +522,7 @@ def solve_maze_astar():
         _, current = heapq.heappop(open_set)
         if current == goal:
             path = reconstruct_path(came_from, goal)
-            draw_solution(path, solving=True)
+            draw_path(path)
             execution_time_label.config(text=f"Execution Time: {time.time() - start_time:.4f}s")
             return
 
@@ -408,6 +543,7 @@ def solve_maze_selected():
         solve_maze_astar()
     else:
         solve_maze_dfs()
+
 
 # Create Tkinter window
 root = tk.Tk()
