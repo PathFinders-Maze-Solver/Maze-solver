@@ -55,7 +55,7 @@ def solve_maze_bfs(start, goal, grid, index, update_gui, canvas, execution_time_
 
         # Continue solving until the goal is reached
         if solving:
-            root.after(50, step)  # Continue to the next step
+            root.after(1, step)  # Continue to the next step
 
     # Start the first step
     step()

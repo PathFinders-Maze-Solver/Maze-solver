@@ -94,6 +94,6 @@ def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, 
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk
 
-        root.after(50, step)  # Continue to the next step
+        root.after(1, step)  # Continue to the next step
 
     step()

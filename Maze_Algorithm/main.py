@@ -173,7 +173,7 @@ def generate_maze():
         canvas.img = img_tk  # Keep reference to avoid garbage collection
 
         if stack or not all(cell.visited for cell in grid):
-            root.after(50, step)  # Continue maze generation
+            root.after(1, step)  # Continue maze generation
         else:
             set_start_and_goal()
             messagebox.showinfo("Maze Generation", "Maze generation complete!")

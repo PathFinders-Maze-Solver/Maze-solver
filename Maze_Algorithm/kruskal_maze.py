@@ -189,7 +189,7 @@ def generate_maze():
         canvas.img = img_tk
 
         if walls:
-            root.after(50, step)  # Continue maze generation
+            root.after(1, step)  # Continue maze generation
         else:
             set_start_and_goal()
             messagebox.showinfo("Maze Generation", "Maze generation complete!")
