@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1eef7893-31eb-4a39-ac03-1ff091acb2f2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py" beforeDir="false" afterPath="$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PathFinders_Group5/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/PathFinders_Group5/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,12 +94,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py</url>
-          <line>909</line>
+          <line>912</line>
           <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py</url>
-          <line>923</line>
+          <line>926</line>
           <option name="timeStamp" value="15" />
         </line-breakpoint>
       </breakpoints>

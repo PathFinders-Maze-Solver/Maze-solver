@@ -29,8 +29,8 @@ grid_size = None # Grid size
 w = 0  # Cell size (will be computed)
 x_offset = 0  # Maze drawing x offset
 y_offset = 0  # Maze drawing y offset
-width = 600  # Canvas width
-height = 600  # Canvas height
+width = 530  # Canvas width
+height = 530  # Canvas height
 
 
 start_time = None  # Used for timing maze generation
@@ -38,7 +38,7 @@ start_time = None  # Used for timing maze generation
 
 # Add a setup function to initialize the content in the provided frame
 def setup(parent_frame):
-    global root, canvas, execution_time_label, generate_button, algorithm_var, solve_button
+    global root, canvas, execution_time_label,algorithm_var, solve_button
 
     # --- Global Cell class used by both generation and image input ---
     class Cell:
@@ -64,7 +64,6 @@ def setup(parent_frame):
 
         def show(self, surface, is_start=False, is_goal=False):
             global w, x_offset, y_offset
-            # print(w,x_offset,y_offset)
             x = self.i * w + x_offset
             y = self.j * w + y_offset
             # Draw cell background
@@ -904,7 +903,6 @@ def setup(parent_frame):
             maze_height = rows * w
             x_offset = (width - maze_width) // 2
             y_offset = (height - maze_height) // 2
-            print(cols, rows, w, maze_height, maze_width, x_offset, y_offset)
 
             # Find entrance and exit points (cells on the border with an open wall)
             border_openings = []
@@ -962,7 +960,6 @@ def setup(parent_frame):
                         goal.walls[2] = False  # Open bottom wall
             else:
                 # If no openings detected, force openings at opposite corners
-                print("No openings detected in maze border. Creating openings at opposite corners.")
                 start = next((cell for cell in grid if cell.i == 0 and cell.j == 0), None)
                 goal = next((cell for cell in grid if cell.i == cols - 1 and cell.j == rows - 1), None)
                 if start:
@@ -1087,5 +1084,5 @@ def setup(parent_frame):
     algo_label = tk.Label(top_frame, text="Algorithm:", bg="#d3d3d3")
     algo_label.pack(side=tk.RIGHT, padx=5)
 
-    canvas = tk.Canvas(root, width=600, height=600)
+    canvas = tk.Canvas(root, width=530, height=530)
     canvas.pack()
