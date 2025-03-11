@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1eef7893-31eb-4a39-ac03-1ff091acb2f2" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py" beforeDir="false" afterPath="$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PathFinders_Group5/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/PathFinders_Group5/main.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/animateMaze.py" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="2rgkpxsDgX1Xy3MOsIyMZPPPLiG" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.BFS_maze_solver.executor": "Run",
+    "Python.Input_maze_size.executor": "Run",
+    "Python.Load_maze_image.executor": "Run",
+    "Python.Maze_ui.executor": "Run",
+    "Python.__init__.executor": "Run",
+    "Python.animateMaze.executor": "Run",
+    "Python.center_path.executor": "Run",
+    "Python.cv_maze.executor": "Run",
+    "Python.cv_maze1.executor": "Run",
+    "Python.cv_maze2.executor": "Run",
+    "Python.dijkstra.executor": "Run",
+    "Python.help1.executor": "Run",
+    "Python.imageMaze2.executor": "Run",
+    "Python.img_maze.executor": "Run",
+    "Python.kruskal_maze.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.mazeGUI.executor": "Run",
+    "Python.mazeJs.executor": "Run",
+    "Python.new_mze.executor": "Run",
+    "Python.vision-maze.executor": "Run",
+    "Python.vision.executor": "Run",
+    "Python.vision_new.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "D:/SEMESTER 07/vimaze",
+    "settings.editor.selected.configurable": "advanced.settings"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\SEMESTER 07\Maze-Solver-Project\Maze-solver\Maze_Algorithm" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-7a29c1521ef0-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.11799.298" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1eef7893-31eb-4a39-ac03-1ff091acb2f2" name="Changes" comment="" />
+      <created>1736988292101</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1736988292101</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py</url>
+          <line>909</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/PathFinders_Group5/Load_maze_image.py</url>
+          <line>923</line>
+          <option name="timeStamp" value="15" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="wall_indicators[2]" />
+        <watch expression="wall_indicators[4]" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

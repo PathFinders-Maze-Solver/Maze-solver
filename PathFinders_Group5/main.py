@@ -1,7 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
-import Input_maze_size  
-import Load_maze_image 
+import Input_maze_size
+import Load_maze_image
+
 
 # Function to load algo.py content
 def load_algo():
@@ -19,6 +19,7 @@ def load_algo():
     # Add algo.py functionality to the frame
     Input_maze_size.setup(algo_frame)  # Call a setup function from algo.py to initialize its content
 
+
 # Function to load vision.py content
 def load_vision():
     # Clear the current content
@@ -35,12 +36,15 @@ def load_vision():
     # Add vision.py functionality to the frame
     Load_maze_image.setup(vision_frame)  # Call a setup function from vision.py to initialize its content
 
+
 # Function to change button color on hover
 def on_enter(e):
     e.widget.config(bg="#006d77", fg="white")  # Change color on hover
 
+
 def on_leave(e):
     e.widget.config(bg="#006d77", fg="black")  # Revert back
+
 
 # Function to show the main menu (selection screen)
 def show_main_menu():
@@ -68,7 +72,7 @@ def show_main_menu():
         "bg": "#006d77", "fg": "white",  # Peacock blue background, white text
         "bd": 0, "relief": "flat",
         "activebackground": "#0097a7",  # Lighter teal for hover
-        "activeforeground": "white"  
+        "activeforeground": "white"
     }
 
     # Create buttons with hover effects
@@ -84,9 +88,11 @@ def show_main_menu():
     algo_button.pack(pady=20, ipadx=10, ipady=5)
     vision_button.pack(pady=20, ipadx=10, ipady=5)
 
+
 # Function to close the application
 def close_app():
     root.destroy()
+
 
 # Create the main window
 root = tk.Tk()
@@ -98,12 +104,13 @@ title_frame = tk.Frame(root, bg="#333", padx=10, pady=10)
 title_frame.pack(fill=tk.X)
 
 # Title and Group Number
-title_label = tk.Label(title_frame, text="PathFinders - Group Number 5", 
+title_label = tk.Label(title_frame, text="PathFinders - Group Number 5",
                        font=("Arial", 20, "bold"), fg="white", bg="#333")
 title_label.place(relx=0.5, rely=0.5, anchor="center")  # Center the title
 
 # Back Button (top-right, before close button)
-back_button = tk.Button(title_frame, text="⬅ Back", command=show_main_menu, font=("Arial", 12), bg="lightgray", fg="black", bd=0)
+back_button = tk.Button(title_frame, text="⬅ Back", command=show_main_menu, font=("Arial", 12), bg="lightgray",
+                        fg="black", bd=0)
 
 # Close Button (top-right)
 close_button = tk.Button(title_frame, text="", command=close_app, font=("Arial", 14), bg="#333", bd=0)
