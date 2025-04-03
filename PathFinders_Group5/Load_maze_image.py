@@ -886,7 +886,7 @@ def setup(parent_frame):
     def load_maze_image():
         global cols, rows, grid, w, x_offset, y_offset, start, goal, start_time
         file_path = filedialog.askopenfilename(title="Select Maze Image")
-        start_time = time.time()
+        start_time = time.perf_counter()
         if not file_path:
             return
         try:
@@ -969,9 +969,9 @@ def setup(parent_frame):
 
             redraw_maze()
             # Calculate and update execution time
-            end_time = time.time()
+            end_time = time.perf_counter()
             execution_time = round(end_time - start_time, 2)
-            execution_time_label.config(text=f"Execution Time: {execution_time}s")
+            execution_time_label.config(text=f"Execution Time: {execution_time}ms")
             messagebox.showinfo("Maze Loaded", "Maze loaded from image successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load maze image: {str(e)}")
@@ -1033,7 +1033,7 @@ def setup(parent_frame):
         img_tk = ImageTk.PhotoImage(img)
         canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
         canvas.img = img_tk
-        execution_time_label.config(text="Execution Time: 0s")
+        execution_time_label.config(text="Execution Time: 0.0ms")
 
     # --- Clear Maze (remove current maze and reset inputs) ---
     def clear_maze():
@@ -1043,7 +1043,7 @@ def setup(parent_frame):
         stack.clear()
         start = goal = None
         canvas.delete("all")
-        execution_time_label.config(text="Execution Time: 0s")
+        execution_time_label.config(text="Execution Time: 0.0ms")
 
     # Replace the root window with the provided parent frame
     root = parent_frame
@@ -1055,7 +1055,7 @@ def setup(parent_frame):
     top_frame = tk.Frame(root, bg="#d3d3d3", padx=10, pady=10)
     top_frame.pack(side=tk.TOP, fill=tk.X)
 
-    execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
+    execution_time_label = tk.Label(root, text="Execution Time: 0.0ms", font=('Arial', 12))
     execution_time_label.pack(pady=10)
 
     load_image_button = tk.Button(top_frame, text="Load Maze Image", command=load_maze_image)

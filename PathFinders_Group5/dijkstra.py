@@ -15,7 +15,7 @@ def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, 
     open_set = []
     heapq.heappush(open_set, (0, start))
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     surface = pygame.Surface((width, height))
     surface.fill((255, 255, 255))
 
@@ -88,7 +88,7 @@ def solve_maze_dijkstra(start, goal, grid, index, canvas, execution_time_label, 
             pygame.draw.line(surface, (0, 0, 255), (x1, y1), (x2, y2), 2)  # Blue for search path
 
         # Update execution time
-        execution_time_label.config(text=f"Execution Time: {round(time.time() - start_time, 2)}s")
+        execution_time_label.config(text=f"Execution Time: {round(time.perf_counter() - start_time, 2)}ms")
 
         # Update the canvas
         img_data = pygame.image.tostring(surface, "RGB")

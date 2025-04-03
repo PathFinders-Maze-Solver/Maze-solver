@@ -41,7 +41,7 @@ def setup(parent_frame):
         grid.clear()
         stack.clear()
 
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         maze_width = cols * w
         maze_height = rows * w
@@ -180,9 +180,9 @@ def setup(parent_frame):
                     cell2.highlight(surface)
 
             # Calculate and update execution time
-            end_time = time.time()
+            end_time = time.perf_counter()
             execution_time = round(end_time - start_time, 2)
-            execution_time_label.config(text=f"Execution Time: {execution_time}s")
+            execution_time_label.config(text=f"Execution Time: {execution_time}ms")
 
             # Update the canvas with the maze
             img_data = pygame.image.tostring(surface, "RGB")
@@ -348,7 +348,7 @@ def setup(parent_frame):
     top_frame = tk.Frame(root, bg="#d3d3d3", padx=10, pady=10)
     top_frame.pack(side=tk.TOP, fill=tk.X)
 
-    execution_time_label = tk.Label(root, text="Execution Time: 0.0s", font=('Arial', 12))
+    execution_time_label = tk.Label(root, text="Execution Time: 0.0ms", font=('Arial', 12))
     execution_time_label.pack(pady=10)
 
     size_label = tk.Label(top_frame, text="Maze Size:", bg="#d3d3d3")

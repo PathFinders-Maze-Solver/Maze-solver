@@ -17,7 +17,7 @@ def solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_ti
 
     visited = set()
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     solving = True  # Flag to track if solving is still in progress
 
     surface = pygame.Surface((width, height))
@@ -36,9 +36,9 @@ def solve_maze_a_star(start, goal, grid, index, update_gui, canvas, execution_ti
             solving = False  # Mark as solved, so we clear the blue lines
 
             # Calculate and update execution time
-            end_time = time.time()
+            end_time = time.perf_counter()
             execution_time = round(end_time - start_time, 2)
-            execution_time_label.config(text=f"Execution Time: {execution_time}s")
+            execution_time_label.config(text=f"Execution Time: {execution_time}ms")
 
         # Update the GUI at each step
         update_gui(path, solving, surface)
